@@ -492,16 +492,17 @@ def reference_lengths(fasta):
         reference_lengths[id_] = length
         return reference_lengths
 
-def parse_bam(bam_file):
-    'Parse bam file and return a dict of start,end of each read on reference'
+def parse_bam(bam_file, num_mm):
     bam_parsed = ps.AlignmentFile(bam_file, 'rb')
     bam_dict = defaultdict(list)
     for read in bam_parsed:
         reference = read.reference_name
-        if read.is_proper_pair and read.is_paired and reference == read.next_reference_name:
+        if read.is_proper_pair and read.is_paired and reference == read.next_reference_name and read.get_tag('NM') <= num_mm:
             read_name,reference = read.query_name,reference.split(' ')[0]
-            reference_positions = read.get_reference_positions()
-            start_pos,end_pos = reference_positions[0],reference_positions[-1]
+            reference_positions = read.get_reference_positions(full_length=False)
+            start_pos = reference_positions[0] + 1
+            query_length = read.query_length
+            end_pos = start_pos + query_length
             info = (read_name,reference,start_pos,end_pos)
             bam_dict[reference].append(info)
     return bam_dict
@@ -548,7 +549,7 @@ def find_regions(bam_dict, look_len, reference_lengths):
 ###Example usage of "sliding window" code
 # ref_bps = reference_lengths(fasta)
 #
-# bam_dict = parse_bam(bam_file)
+# bam_dict = parse_bam(bam_file, 1)
 #
 # dict_replace_chunked = find_regions(bam_dict,5,ref_bps)
 
