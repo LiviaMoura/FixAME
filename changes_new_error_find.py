@@ -1,5 +1,5 @@
 ###########################################################################
-#project: Genome curation - Mimicking Banfield's genome curation proccess 
+#project: Genome curation - Mimicking Banfield's genome curation proccess
 #autor: Livia Maria Silva Moura
 #e-mail: liviam.moura@gmail.com
 # PDSE Scholarship UC Berkeley - PI's BR/USA: Setubal,J /Banfield, J
@@ -68,6 +68,7 @@ def find_regions(bam_dict, look_len, reference_lengths):
                     pass_count += 1
                     break
         bad_positions = set(reference_positions) - good_positions
+        based_positions = sorted(bad_positions)
         for k,g in itertools.groupby(enumerate(bad_positions), lambda x: x[1] - x[0]):
             bad_region = tuple(map(operator.itemgetter(1), g))
             bad_start,bad_end = bad_region[0],bad_region[-1]
@@ -76,10 +77,10 @@ def find_regions(bam_dict, look_len, reference_lengths):
     return reference_to_bad_regions
 
 def build_N(ext,num_mm_filt,fasta,thread,bam_filt=""):
-    
+
     ref_bps = reference_lengths(fasta,ext)
     bam_dict = parse_bam(bam_filt+'_sorted.bam')
-    dict_replace_chunked = find_regions(bam_dict,5,ref_bps)    
+    dict_replace_chunked = find_regions(bam_dict,5,ref_bps)
 
     print(dict_replace_chunked)
 
