@@ -77,20 +77,19 @@ def lm_curation_validate(**kwargs):
         name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
         
         #Creating folder fixame
-        #mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
-        #os.mkdir(mydir)
-        mydir =  os.path.join(output_dir,'fixame_2019-Oct-14_12-15-12')
-
+        mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
+        os.mkdir(mydir)
+        
         #Creating folder for the new fasta without no reason Ns
-        #os.mkdir(os.path.join(mydir,'new_fastas'))
-        #check_overlap(mydir,fasta_in,av_readlen,True)
+        os.mkdir(os.path.join(mydir,'new_fastas'))
+        check_overlap(mydir,fasta_in,av_readlen,True)
         
         #Creating folder for temp files - alignments related
-        #os.mkdir(os.path.join(mydir,'tmp'))
-        #aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')
+        os.mkdir(os.path.join(mydir,'tmp'))
+        aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')
         
         #Filtering the fastq - Make curation process faster
-        #filtering_bam(mydir,kwargs.get('threads'),kwargs.get('num_mismatch'),mydir+'/tmp/'+name_fasta+'_renewed',read1_in,read2_in,read12_in)
+        filtering_bam(mydir,kwargs.get('threads'),kwargs.get('num_mismatch'),mydir+'/tmp/'+name_fasta+'_renewed',read1_in,read2_in,read12_in)
         
         orig_target,fasta_len,coverage_dict,av_readlen,mean_gap_length = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',mydir+'/tmp/'+name_fasta+'_renewed',kwargs.get('fasta_cov'))
         
