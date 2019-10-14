@@ -155,7 +155,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0 to N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
-                    print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                    
+                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                    
                     variat=(av_readlen*2)-alignments[0][3]                    
                     new_subfasta = temp_left[:-variat]+temp_right
                     temp_dif_pos+=number+variat
@@ -168,7 +168,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
-                        print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                        
+                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                        
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
                         control_index.append(tuple([j+1,N_pos[j][2]+alignments[0][4]]))
@@ -183,7 +183,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0-N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
-                    print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")
+                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")
                     variat=(av_readlen*2)-alignments[0][3]                      
                     new_subfasta = temp_left[:-variat]+temp_right
                     temp_dif_pos+=number+variat
@@ -195,7 +195,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
-                        print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")
+                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
                         control_index.append(tuple([j+1,N_pos[j][2]+alignments[0][4]]))                    
