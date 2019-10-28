@@ -8,7 +8,6 @@ import pandas as pd
 from collections import defaultdict
 from xopen import xopen
 from Bio import SeqIO
-from Bio.SeqIO.FastaIO import SimpleFastaParser
 from xopen import xopen
 
 __author__ = "Livia Moura"
@@ -18,12 +17,17 @@ __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
 
 class Error_finder():
-    def reference_lengths(fasta):
-        length_dict = {}
-        for header,seq in SimpleFastaParser(xopen(fasta)):
-            id_,length = header.split(' ')[0], len(seq)
+    
+    def reference_info(fasta):
+        
+        length_dict, gc_dict = {}, {}
+
+        for record in SeqIO.parse(xopen(fasta), 'fasta'):
+            id_, length, gc = record.id, len(record.seq), GC(record.seq)
             length_dict[id_] = length
-        return length_dict
+            gc_dict[id_] = gc
+
+            return length_dict, gc_dict
 
     def parse_bam(bam_file, num_mm):
         #Parse bam file and return a dict of start,end of each read on reference'
