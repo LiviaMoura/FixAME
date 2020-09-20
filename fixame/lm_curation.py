@@ -111,13 +111,13 @@ def lm_curation_validate(**kwargs):
            
 #    os.path.realpath(os.path.expanduser)
 
-def average_read(r1_fastq):
+def temp_average_read(r1_fastq):
     '''Initial fast avg read length - It'll be recalculated with more precision later'''
     sum_read_len=0
     for num,record in enumerate(SeqIO.parse(xopen(r1_fastq), 'fastq')):
         sum_read_len += len(record.seq)
-        if num == 999:
-            av_read_len = int(sum_read_len/1000)
+        if num == 9999:
+            av_read_len = int(sum_read_len/10000)
             break
     return av_read_len
 
@@ -130,7 +130,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         if os.path.exists(os.path.join(output_dir,'tmp','target')): ### remove target file if it exists
             os.remove(os.path.join(output_dir,'tmp','target')) 
         new_fasta_temp = open(os.path.join(output_dir,'tmp','v_'+str(count)+'.fasta'),'w')
-        
+    #print('CHEGAMOS AQUI?')   
     for seq_record in SeqIO.parse(fasta,'fasta'):
         new_target=list()
         N_pos,N_target_temp = check_npos(seq_record.seq,av_readlen)               
@@ -141,7 +141,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         
         if not N_pos:
             new_subfasta = seq_record.seq
-            
+        
+        print(f'\nN position region:\n{N_pos}\n') ########################
         control_index =  list()    
         for j,(start,end,number) in enumerate(N_pos):
             #print(start,end,"START|END")
@@ -155,7 +156,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0 to N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
-                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                    
+                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                 #############################   
                     variat=(av_readlen*2)-alignments[0][3]                    
                     new_subfasta = temp_left[:-variat]+temp_right
                     temp_dif_pos+=number+variat
@@ -168,7 +169,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
-                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                        
+                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                    ###########################    
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
                         control_index.append(tuple([j+1,N_pos[j][2]+alignments[0][4]]))
@@ -183,7 +184,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0-N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
-                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")
+                    #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                     #####################
                     variat=(av_readlen*2)-alignments[0][3]                      
                     new_subfasta = temp_left[:-variat]+temp_right
                     temp_dif_pos+=number+variat
@@ -195,7 +196,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
-                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")
+                        #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")              ###################
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
                         control_index.append(tuple([j+1,N_pos[j][2]+alignments[0][4]]))                    
@@ -219,7 +220,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         
     new_fasta_temp.close()
     if not user_file:
-        file_target.close()    
+        file_target.close()        
 
    
 def check_npos(one_fasta,av_readlen,error=False):
@@ -306,15 +307,14 @@ def filtering_bam(output_dir,thread,num_mm,bam_sorted,r1,r2,r12):
     varpath=script_path()
     subprocess.call([os.path.join(varpath,'tools','bbmap','filterbyname.sh'), 'in='+r1, 'in2='+r2, 'out='+output_dir+'/tmp/res_R1.fastq', 'out2='+output_dir+'/tmp/res_R2.fastq', 'names='+output_dir+'/tmp/matched_reads', 'include=t','overwrite=t'])
 
-def build_N(output_dir,thread,fasta,bam_file,fasta_cov):
+def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
     ''' Replace error for N and extend the contig's edges for N - pre-curation step'''
     
     if os.path.exists(os.path.join(output_dir,'tmp',"target")): ### remove target file if it exists
-            os.remove(os.path.join(output_dir,'tmp',"target"))
-
-    ref_bps = Error_finder.reference_lengths(fasta)
-    bam_dict,ref_read_lengths,mean_template_length = Error_finder.parse_bam(bam_file+'_sorted.bam',1)
-    dict_replace,coverage_dict,av_readlen,mean_gap_length = Error_finder.find_regions(fasta_cov,bam_dict,5,ref_bps,ref_read_lengths,mean_template_length)
+            os.remove(os.path.join(output_dir,'tmp',"target"))    
+    
+    dict_replace = {key: value for key, value in dict_replace_0.items() if value}
+    
     dict_replace_chunked = defaultdict(list)     
     
     for key, value in dict_replace.items():        
@@ -353,7 +353,9 @@ def build_N(output_dir,thread,fasta,bam_file,fasta_cov):
         
         for i in range(0, len(final_list[key]), 2):
             dict_replace_chunked[key].append(tuple(final_list[key][i:i+2]))            
-        
+    
+    print(dict_replace_chunked)
+    #sys.exit()
      # #---------------- Replace region for N ---------------------------
     #new_fasta =''
     dict_error_pos = defaultdict(list)
@@ -415,7 +417,8 @@ def build_N(output_dir,thread,fasta,bam_file,fasta_cov):
                 error_loc.write("{}\t{}\n".format(key,item))
         error_loc.close()                    
     
-    return dict_replace_chunked,dict_len,coverage_dict,av_readlen,mean_gap_length
+    return dict_replace_chunked,dict_len
+
 
 def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_readlen):    
     '''Find changes on Ns position and replace them'''
@@ -424,10 +427,11 @@ def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_
     varpath = script_path()
     
     # Run variant finder - bcftools
-    print('CHEGUEI NO MPILEUP')
-    comm = "{}/bcftools mpileup -R {}/target -A -B -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(os.path.join(varpath,'tools','bcftools-1.9'),os.path.join(output_dir,'tmp'),os.path.join(output_dir,'tmp'),count-1,os.path.join(output_dir,'tmp'),count-1)
+    
+    comm = "{}/bcftools mpileup -R {}/target -A -B -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(os.path.join(varpath,'tools','bcftools-1.10.2'),os.path.join(output_dir,'tmp'),os.path.join(output_dir,'tmp'),count-1,os.path.join(output_dir,'tmp'),count-1)
     varfind = subprocess.Popen(comm, shell=True, stdout=subprocess.PIPE,universal_newlines=True)
     output = varfind.communicate()[0]
+    #print(f'AQUI TEMOS O OUTPUT {output}')
     varfind.stdout.close()
     
     # Process output based on dp_cov -default[1]
@@ -465,21 +469,21 @@ def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_
         else:
             new_fasta_temp.write(">{}\n{}\n".format(seq_record.id,seq_record.seq)) ##removi seq_mutable e substitui por seq_record.seq
     new_fasta_temp.close()     
-    
+    #print('Checar overlap')
     check_overlap(output_dir,os.path.join(output_dir,'tmp','snp_fasta.fasta'),av_readlen,count=count)
 
 
 def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap):
     fasta_wo_N = ""
     ext_size = av_readlen*3
-    final_fasta = open(os.path.join(output_dir,'curated_seqs',name_fasta+'_curated.fasta'), 'w')
-    print(fasta_semifinal)
+    final_fasta = open(os.path.join(output_dir,'curated_seq',name_fasta+'_curated.fasta'), 'w')
+    #print(fasta_semifinal)
 
     for seq_record in SeqIO.parse(fasta_semifinal,'fasta'):
         seq_mutable = seq_record.seq.tomutable()
         actual_start, actual_end = 0,0
         if seq_record.id not in orig_target.keys():        
-            fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end)
+            fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
         else:
             if orig_target[seq_record.id][0][0] == 1:
@@ -488,7 +492,7 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
                 actual_end = orig_target[seq_record.id][-1][1] - orig_target[seq_record.id][-1][0] +1 + ext_size
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
-    final_fasta.close()   
+    final_fasta.close()     
 
 def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     len_seq = len(seq_mutable)    
