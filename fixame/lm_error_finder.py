@@ -21,21 +21,21 @@ __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
 
-class Error_finder():
-    
-    def calculate_reference_lengths(fasta, minimum_assembly_length):
-    "Calculate lengths of sequences and return a dictionary"
 
-    length_dict = {}
+   
+def calculate_reference_lengths(fasta, minimum_assembly_length):
+"Calculate lengths of sequences and return a dictionary"
 
-    for record in SeqIO.parse(xopen(fasta), "fasta"):
-        length = len(record.seq)
+length_dict = {}
 
-        if length >= minimum_assembly_length:
-            id_ = record.id
-            length_dict[id_] = length
+for record in SeqIO.parse(xopen(fasta), "fasta"):
+    length = len(record.seq)
 
-    return length_dict
+    if length >= minimum_assembly_length:
+        id_ = record.id
+        length_dict[id_] = length
+
+return length_dict
 
 
 def check_palindrome(sequence):
