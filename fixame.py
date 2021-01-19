@@ -15,7 +15,7 @@ __status__ = "Development"
 import argparse
 import sys
 import os
-from fixame.control import Controller
+from fixame.fixame_control import Controller
 
 if sys.version_info[0] < 3:
     print('''
