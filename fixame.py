@@ -7,7 +7,7 @@
 #***************************
 
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2019"
+__copyright__ = "Copyright 2021"
 __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
@@ -24,10 +24,10 @@ if sys.version_info[0] < 3:
     ***********************************************************''')
     sys.exit(1)
 
-import fixame.all_menus
+import fixame.fixame_all_menus
 
 if __name__ == '__main__':
-    args = fixame.all_menus.parse_args(sys.argv[1:])
+    args = fixame.fixame_all_menus.parse_args(sys.argv[1:])
     print(args)
     # do what you came here to do :)
     control = Controller()

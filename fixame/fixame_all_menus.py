@@ -1,5 +1,3 @@
-### STILL WORKING ON THIS
-
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2020"
 __maintainer__ = "Livia Moura"

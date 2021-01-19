@@ -4,7 +4,7 @@ import logging
 import sys
 import fixame
 
-import fixame.lm_curation
+import fixame.fixame_curation
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2019"
@@ -18,7 +18,7 @@ class Controller():
 
     def curation_operation(self, **kwargs):
         logging.debug("Start teste")
-        fixame.lm_curation.lm_curation_validate(**kwargs)
+        fixame.fixame_curation.fixame_curation_validate(**kwargs)
         logging.debug("!!! Finished teste!!!")
 
     #def error_finder_operation(self,**kwargs):

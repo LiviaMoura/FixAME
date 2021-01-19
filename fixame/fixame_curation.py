@@ -13,9 +13,9 @@ from Bio import SeqIO
 from Bio import pairwise2
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 
-from fixame.aligner import aligner
-from fixame.lm_common import *
-from fixame.lm_error_finder import Error_finder
+from fixame.fixame_aligner import aligner
+from fixame.fixame_common import *
+from fixame.fixame_error_finder import Error_finder
 
 from xopen import xopen
 
@@ -25,7 +25,7 @@ __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
 
-def lm_curation_validate(**kwargs):
+def fixame_curation_validate(**kwargs):
     '''
     *Fixame curation args:
     xtimes:         Number of alignments during the curation [10]

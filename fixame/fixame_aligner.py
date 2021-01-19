@@ -4,7 +4,7 @@ import logging
 import sys
 import subprocess
 import fixame
-from fixame.lm_common import script_path 
+from fixame.fixame_common import script_path 
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2019"

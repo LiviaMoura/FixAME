@@ -18,14 +18,14 @@ def common_validate(**kwargs):
     fasta:          fasta file for genome|metagenome [.fasta|.fa|.fna]
     output_dir:     output directory where it'll created a fixame_[date] folder
     bins:           folder cointaining bins [.fasta|.fa|.fna]
-    r12:            Interlaced SYNCED forward and reverse paired-end reads
+    #r12:            Interlaced SYNCED forward and reverse paired-end reads
     r1:             Forward paired-end reads
     r2:             Reverse paired-end reads
     '''
     
-    if kwargs.get('r12') and (kwargs.get('r1') or kwargs.get('r2')):
-        logging.info('Checking reads setup...') 
-        logging.error('You should not use -r12 and -r1 and/or -r2 together.')
+    # if kwargs.get('r12') and (kwargs.get('r1') or kwargs.get('r2')):
+    #     logging.info('Checking reads setup...') 
+    #     logging.error('You should not use -r12 and -r1 and/or -r2 together.')
 
     if kwargs.get('fasta') and kwargs.get('bins'):
         logging.info('Checking chosen mode [genome/metagenome|bin]')

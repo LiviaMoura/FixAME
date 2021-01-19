@@ -15,27 +15,25 @@ import pandas as pd
 import subprocess
 import regex
 
-__author__ = "Livia Moura, Rohan Sachdeva"
+__author__ = "Rohan Sachdeva"
 __copyright__ = "Copyright 2020"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
-
-
    
 def calculate_reference_lengths(fasta, minimum_assembly_length):
-"Calculate lengths of sequences and return a dictionary"
+    "Calculate lengths of sequences and return a dictionary"
 
-length_dict = {}
+    length_dict = {}
 
-for record in SeqIO.parse(xopen(fasta), "fasta"):
-    length = len(record.seq)
+    for record in SeqIO.parse(xopen(fasta), "fasta"):
+        length = len(record.seq)
 
-    if length >= minimum_assembly_length:
-        id_ = record.id
-        length_dict[id_] = length
+        if length >= minimum_assembly_length:
+            id_ = record.id
+            length_dict[id_] = length
 
-return length_dict
+    return length_dict
 
 
 def check_palindrome(sequence):
