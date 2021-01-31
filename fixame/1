@@ -46,20 +46,20 @@ def printHelp(version):
     print('''\
 
 Workflow
-  curation         Locate and try to fix potentials local assembly errors.
+  curation         Locate and try to fix potentials locals assembly errors.
 
 Single process
   error_finder     Return the positional of assembly errors
   merge            Locate overlaps between contigs edges and connect them
   find_circular    [Yet to be implemented here]
   
-Ex.: fixame [curation|error_finder|merge|find_circular] --help
+Example: fixame [curation|error_finder|merge|find_circular] --help
 
 ''')
 
 
 def cf(prog): return CustomFormatter(prog)
-TESTE
+
 
 parser = argparse.ArgumentParser(
     prog='fixame',
@@ -109,10 +109,10 @@ curation_parser_opt.add_argument("--ext_multifasta", help="Execute the merge bet
 subparsers = parser.add_subparsers(dest='act')
 
 curation_call = subparsers.add_parser(
-    'curation', help='curation option', parents=[req_parser, curation_parser, system_parser], formatter_class=cf, add_help=False)
+    'curation', help='curation option', parents=[req_parser, curation_parser, system_parser], formatter_class=cf)
 
 merge_call = subparsers.add_parser(
-    'merge', help='merge command', parents=[req_parser], add_help=False )
+    'merge', help='merge command', parents=[req_parser])
 
 
 # Calling menus

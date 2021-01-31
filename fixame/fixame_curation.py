@@ -15,7 +15,7 @@ from Bio.SeqIO.FastaIO import SimpleFastaParser
 
 from fixame.fixame_aligner import aligner
 from fixame.fixame_common import *
-from fixame.fixame_error_finder import Error_finder
+from fixame.fixame_error_finder import *
 
 from xopen import xopen
 
