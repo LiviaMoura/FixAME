@@ -12,7 +12,7 @@ __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
 
-import argparse
+import argparse 
 import sys
 import os
 from fixame.fixame_control import Controller
@@ -28,7 +28,8 @@ import fixame.fixame_all_menus
 
 if __name__ == '__main__':
     args = fixame.fixame_all_menus.parse_args(sys.argv[1:])
-    print(args)
+    #print(args)
     # do what you came here to do :)
     control = Controller()
     control.parseArguments(args)
+

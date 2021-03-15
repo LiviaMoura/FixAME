@@ -5,6 +5,7 @@ import sys
 import re
 import subprocess
 import fixame
+import shutil
 import pysam as ps
 from datetime import datetime
 from collections import defaultdict
@@ -44,7 +45,6 @@ def fixame_curation_validate(**kwargs):
     r2:             Reverse paired-end reads
 
     *Returns:
-        ESCREVER ALGO AQUI.
     '''
 
     method = common_validate(**kwargs)
@@ -56,60 +56,293 @@ def fixame_curation_validate(**kwargs):
 
     if (kwargs.get('num_mismatch') < 0) or (kwargs.get('num_mismatch') > 5):
         logging.info('Checking number of mismatches allowed for the filtering reads')
-        logging.error("-num_mismatch 0>=x>=5")
+        logging.error("-num_mismatch must be 0>=x>=5")
         sys.exit()
+
+    if (kwargs.get('min_ctg_len') < 800):
+        logging.info('Checking minimum contig length')
+        logging.error("--min_ctg_len must be >= 800")
+        sys.exit()
+    
+    if kwargs.get('r12'):
+        read12_in = os.path.realpath(os.path.expanduser(kwargs.get('r12')))
+        read1_in =''
+        read2_in =''
+    else:    
+        read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
+        read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
+        read12_in = ''
  
     output_dir = os.path.abspath(kwargs.get('output_dir'))
+    av_readlen = temp_average_read(kwargs.get('r1'))
+    minimum_assembly_length = kwargs.get('min_ctg_len') 
     
-    av_readlen = average_read(kwargs.get('r1'))
-     
-    
-    if method == 0:
-        fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
-        if kwargs.get('r12'):
-            read12_in = os.path.realpath(os.path.expanduser(kwargs.get('r12')))
-            read1_in =''
-            read2_in = ''
-        else:    
-            read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
-            read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
-            read12_in = ''
-        name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
-        
-        #Creating folder fixame
+    try:
         mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
         os.mkdir(mydir)
-        
-        #Creating folder for the new fasta without no reason Ns
-        os.mkdir(os.path.join(mydir,'new_fastas'))
-        check_overlap(mydir,fasta_in,av_readlen,True)
-        
-        #Creating folder for temp files - alignments related
         os.mkdir(os.path.join(mydir,'tmp'))
-        aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')
-        
-        #Filtering the fastq - Make curation process faster
-        filtering_bam(mydir,kwargs.get('threads'),kwargs.get('num_mismatch'),mydir+'/tmp/'+name_fasta+'_renewed',read1_in,read2_in,read12_in)
-        
-        orig_target,fasta_len,coverage_dict,av_readlen,mean_gap_length = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',mydir+'/tmp/'+name_fasta+'_renewed',kwargs.get('fasta_cov'))
-        
-        for count,r in enumerate(range(kwargs.get('xtimes')),1):
-            print(count)
-            var_cal_fix(mydir,count,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'),orig_target,fasta_len,av_readlen)
-        
-        os.mkdir(os.path.join(mydir,'curated_seqs'))
-        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen,mean_gap_length)
+        os.mkdir(os.path.join(mydir,'new_fastas'))
+        logging_config(mydir)
+        logging.info("Fixame output folder created - {}".format(mydir))
+    except:
+        logging.error("It wasn't possible to create fixame output folder")
 
-    #else:
-    #    fasta_array = []
-    #    for sample in os.listdir(os.path.realpath(os.path.expanduser(kwargs.get('output_dir')))):	
-    #        if sample.lower().endswith(".fasta") or sample.lower().endswith(".fa") or sample.lower().endswith(".fna"):
-    #	        fasta_array.append(sample)
-    #    for fasta_in in fasta_array:
-    #        check_overlap(output_dir,fasta_in,av_readlen,True)
+
+    # Checking the pipeline - genome/metagenoms vs Bins
+    if method == 0:
+        fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
+        name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
+
+        logging.info("\n --- Analysing the file {} ---\n".format(name_fasta))
+        
+                
+        try:
+            logging.info("Checking overlaping at N regions on {} and fix them".format(fasta_in))
+            check_overlap(mydir,fasta_in,av_readlen,True)
+            logging.info("A new reference fasta {} was created".format(mydir+'/new_fastas/'+name_fasta+'_renewed.fasta'))
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        
+        try:
+            logging.info("Mapping reads against the new reference")
+            aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')                
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
+
+        #Filtering the fastq - Make curation process faster
+        try:
+            logging.info("Filtering out reads that didn't map the new ref")
+            filtering_bam(mydir,kwargs.get('threads'),kwargs.get('num_mismatch'),mydir+'/tmp/'+name_fasta+'_renewed',read1_in,read2_in,read12_in)                
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Generating some metrics to keep running")
+            reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_fasta+'_renewed.fasta', minimum_assembly_length)
+
+            (   bam_dict, 
+                reference_read_lengths,
+                average_template_length,
+                average_read_length,
+                average_gap_length,
+                template_length_min,
+                template_length_max,
+            ) = parse_map(mydir+'/tmp/'+name_fasta+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Trying to find regions with local assembly errors")
+            (
+                reference_to_error_regions,
+                coverage_dict,
+                reference_to_high_mismatch_positions,
+            ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
+        except: 
+            logging.error("Something went wrong")  
+            sys.exit()        
+        
+        
+        try:
+            logging.info("Selecting the errors regions")
+            orig_target,fasta_len = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',average_read_length,reference_to_error_regions)
+            
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+
+            
+        logging.info("Starting to fix sample {}\n".format(name_fasta))      
+        os.mkdir(os.path.join(mydir,'fixing_log'))
+        logging.info("Folder {} was created".format(os.path.join(mydir,'fixing_log')))      
+            
+        for count,r in enumerate(range(kwargs.get('xtimes')),1):
+            fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
+            try:
+                logging.info("Loop {} from {}".format(count,kwargs.get('xtimes')))
+                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'),orig_target,fasta_len,av_readlen)
+            except:
+                logging.error("Something went wrong")
+                sys.exit()
+            fixed.close()
+    
+        os.mkdir(os.path.join(mydir,'curated_seqs'))
+        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length)
+
+        if (kwargs.get('keep') == False):
+            shutil.rmtree(os.path.join(mydir,'tmp'))
+        
+
+
+
+    else: # BINS MODE
+        fasta_array = []
+        name_sample = 'bins'
+        contigs_bins = open(os.path.join(mydir,'bin_contigs.txt'), 'w+')
+        merged = open(os.path.join(mydir,'tmp','bins.fasta'),'w+')
+        for sample in os.listdir(os.path.realpath(os.path.expanduser( kwargs.get('bins') ))):
+            name = sample.split('.')[0]
+            if sample.lower().endswith(".fasta") or sample.lower().endswith(".fa") or sample.lower().endswith(".fna"):
+                fasta_array.append(sample)
+                for seq_record in SeqIO.parse(sample,'fasta'):
+                    contigs_bins.write("{}\t{}\n".format(name, seq_record.id))
+                with open(sample, 'r') as readfile:
+                    shutil.copyfileobj(readfile, merged)
+        contigs_bins.close()
+        merged.close()
+
+        fasta_in = os.path.join(mydir,'tmp','bins.fasta')
+
+        logging.info("\n --- Analysing a metagenome sample with {} bins ---\n".format(len(fasta_array)))
+        try:
+            logging.info("Checking overlaping at N regions on {} and fix them".format(fasta_in))
+            check_overlap(mydir,fasta_in, av_readlen,True)
+            logging.info("A new reference fasta {} was created".format(mydir+'/new_fastas/'+name_sample+'_renewed.fasta'))
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+
+        print(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',read1_in,read2_in,read12_in, name_sample+'_renewed')
+
+        try:
+            logging.info("Mapping reads against the new reference")
+            
+            aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_sample+'_renewed')                
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
+
+        #Filtering the fastq - Make curation process faster
+        try:
+            logging.info("Filtering out reads that didn't map the new ref")
+            filtering_bam(mydir,kwargs.get('threads'),kwargs.get('num_mismatch'),mydir+'/tmp/'+name_sample+'_renewed',read1_in,read2_in,read12_in)                
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Generating some metrics to keep running")
+            reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_sample+'_renewed.fasta', minimum_assembly_length)
+
+            (   bam_dict, 
+                reference_read_lengths,
+                average_template_length,
+                average_read_length,
+                average_gap_length,
+                template_length_min,
+                template_length_max,
+            ) = parse_map(mydir+'/tmp/'+name_sample+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Trying to find regions with local assembly errors")
+            (
+                reference_to_error_regions,
+                coverage_dict,
+                reference_to_high_mismatch_positions,
+            ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
+        except: 
+            logging.error("Something went wrong") 
+            sys.exit()         
+        
+        
+        try:
+            logging.info("Selecting the errors regions")
+            orig_target,fasta_len = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',average_read_length,reference_to_error_regions)
+            
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+
+       
+        logging.info("Starting to fix all bins\n")      
+        os.mkdir(os.path.join(mydir,'fixing_log'))
+        logging.info("Folder {} was created".format(os.path.join(mydir,'fixing_log')))      
+            
+        for count,r in enumerate(range(kwargs.get('xtimes')),1):
+            fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
+            try:
+                logging.info("Loop {} from {}".format(count,kwargs.get('xtimes')))
+                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'),orig_target,fasta_len,av_readlen)
+            except:
+                logging.error("Something went wrong")
+                sys.exit()
+            fixed.close()
+    
+        os.mkdir(os.path.join(mydir,'curated_seqs'))
+        remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length)
+
+        if (kwargs.get('keep') == False):
+            try:
+                logging.info("Removing temporary files")
+                shutil.rmtree(os.path.join(mydir,'tmp'))
+            except:
+                logging.info("It wasn't possible to remove the /tmp folder")                
+
+        ## Spliting the bins
+        df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
+        df = df.groupby(0).agg({1:lambda x: list(x)}).reset_index()
+        bin_ctg_dict = dict(zip(df[0], df[1]))
+
+        for k,v in bin_ctg_dict.items():
+            per_bin = open(os.path.join(mydir,'curated_seqs', k+'_fixame.fasta'),'w+')
+            for contig in v:
+                for record in SeqIO.parse(os.path.join(mydir,'curated_seqs','bins_fixame.fasta'),'fasta'):
+                    if record.id == contig:
+                        per_bin.write(">{}\n{}\n".format(contig, record.seq))
+            per_bin.close()
+            
+            per_bin = open(os.path.join(mydir,'new_fastas', k+'_renewed.fasta'),'w+')
+            for contig in v:
+                for record in SeqIO.parse(os.path.join(mydir,'new_fastas','bins_renewed.fasta'),'fasta'):
+                    if record.id == contig:
+                        per_bin.write(">{}\n{}\n".format(contig, record.seq))
+            per_bin.close()
+            
+        os.remove(os.path.join(mydir,'curated_seqs', k+'_fixame.fasta'))
+        os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
+
+
+
+
+
+
+
+            
+        
+        
+        
+    
          
            
 #    os.path.realpath(os.path.expanduser)
+
+def logging_config(workdir):
+    '''Configure the logging'''
+    log_file = os.path.join(workdir, "fixame.log")
+    log_formatter = logging.Formatter("[%(levelname)s] %(asctime)s %(message)s")
+    root_logger = logging.getLogger()
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(log_formatter)
+    root_logger.addHandler(file_handler)
+    root_logger.setLevel(logging.INFO)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(log_formatter)
+    root_logger.addHandler(ch)
+    root_logger.propagate = False
+
 
 def temp_average_read(r1_fastq):
     '''Initial fast avg read length - It'll be recalculated with more precision later'''
@@ -121,7 +354,7 @@ def temp_average_read(r1_fastq):
             break
     return av_read_len
 
-def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
+def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count=''):
     '''Check overlap from the border of N's regions'''
     if user_file:
         name_fasta = os.path.splitext(os.path.basename(fasta))[0]
@@ -130,7 +363,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         if os.path.exists(os.path.join(output_dir,'tmp','target')): ### remove target file if it exists
             os.remove(os.path.join(output_dir,'tmp','target')) 
         new_fasta_temp = open(os.path.join(output_dir,'tmp','v_'+str(count)+'.fasta'),'w')
-    #print('CHEGAMOS AQUI?')   
+       
     for seq_record in SeqIO.parse(fasta,'fasta'):
         new_target=list()
         N_pos,N_target_temp = check_npos(seq_record.seq,av_readlen)               
@@ -142,10 +375,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         if not N_pos:
             new_subfasta = seq_record.seq
         
-        print(f'\nN position region:\n{N_pos}\n') ########################
         control_index =  list()    
         for j,(start,end,number) in enumerate(N_pos):
-            #print(start,end,"START|END")
             
             if j==0: ### first time doesnt have index modification
                 temp_left = seq_record[0:start].seq  ### start = N pos; but here would be Last base pos
@@ -156,6 +387,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0 to N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
+                    if fixed != '':
+                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end))                   
                     #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                 #############################   
                     variat=(av_readlen*2)-alignments[0][3]                    
                     new_subfasta = temp_left[:-variat]+temp_right
@@ -169,6 +402,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
+                        if fixed != '':
+                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end))                   
                         #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                    ###########################    
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
@@ -184,6 +419,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                 ## Self remember alignment list 0-N
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
+                    if fixed != '':
+                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end)) 
                     #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                     #####################
                     variat=(av_readlen*2)-alignments[0][3]                      
                     new_subfasta = temp_left[:-variat]+temp_right
@@ -196,6 +433,8 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
                     
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
+                        if fixed != '':
+                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end)) 
                         #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")              ###################
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
@@ -220,7 +459,9 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,count=''):
         
     new_fasta_temp.close()
     if not user_file:
-        file_target.close()        
+        file_target.close() 
+    if fixed != '':
+        return fixed       
 
    
 def check_npos(one_fasta,av_readlen,error=False):
@@ -304,8 +545,8 @@ def filtering_bam(output_dir,thread,num_mm,bam_sorted,r1,r2,r12):
     outfile.close()
     
     ### Filtering original fastq with the high stringency reads 
-    varpath=script_path()
-    subprocess.call([os.path.join(varpath,'tools','bbmap','filterbyname.sh'), 'in='+r1, 'in2='+r2, 'out='+output_dir+'/tmp/res_R1.fastq', 'out2='+output_dir+'/tmp/res_R2.fastq', 'names='+output_dir+'/tmp/matched_reads', 'include=t','overwrite=t'])
+    #varpath=script_path()
+    subprocess.call([os.path.join('filterbyname.sh'), 'in='+r1, 'in2='+r2, 'out='+output_dir+'/tmp/res_R1.fastq', 'out2='+output_dir+'/tmp/res_R2.fastq', 'names='+output_dir+'/tmp/matched_reads', 'include=t','overwrite=t'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
 
 def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
     ''' Replace error for N and extend the contig's edges for N - pre-curation step'''
@@ -353,9 +594,7 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
         
         for i in range(0, len(final_list[key]), 2):
             dict_replace_chunked[key].append(tuple(final_list[key][i:i+2]))            
-    
-    print(dict_replace_chunked)
-    #sys.exit()
+
      # #---------------- Replace region for N ---------------------------
     #new_fasta =''
     dict_error_pos = defaultdict(list)
@@ -410,17 +649,25 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
         
     fasta_N.close()
     target.close()
-    with open(os.path.join(output_dir,'Errors_location.txt'),'w+') as error_loc:
-        error_loc.write("Sequence\terror_position\n")
+
+    #print(dict_only_errors,'dict_only_errors')
+    with open(os.path.join(output_dir,'Fixame_Errors_report.txt'),'w+') as error_loc:
+        error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
+        counter_err, counter_contigs = 0,0
         for key,value in dict_only_errors.items():
+            logging.debug("{} possibly local errors at contig {}".format(len(value), key))
+            counter_err += len(value)
+            counter_contigs += 1
             for item in value:
-                error_loc.write("{}\t{}\n".format(key,item))
-        error_loc.close()                    
-    
+                error_loc.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(key,item[0],item[1],abs(item[1]-item[0]),'Local_error'))
+        error_loc.close()
+    logging.warning("\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
+    logging.info("The file {} was created".format(output_dir+'/Fixame_Errors_report.txt'))                    
+
     return dict_replace_chunked,dict_len
 
 
-def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_readlen):    
+def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_len,av_readlen):    
     '''Find changes on Ns position and replace them'''
     
     aligner(output_dir,thread,0,os.path.join(output_dir,'tmp','v_'+str(count-1)+'.fasta'),r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='v_'+str(count-1),semi=True)
@@ -428,8 +675,8 @@ def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_
     
     # Run variant finder - bcftools
     
-    comm = "{}/bcftools mpileup -R {}/target -A -B -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(os.path.join(varpath,'tools','bcftools-1.10.2'),os.path.join(output_dir,'tmp'),os.path.join(output_dir,'tmp'),count-1,os.path.join(output_dir,'tmp'),count-1)
-    varfind = subprocess.Popen(comm, shell=True, stdout=subprocess.PIPE,universal_newlines=True)
+    comm = "bcftools mpileup -R {}/target -A -B -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(os.path.join(output_dir,'tmp'),os.path.join(output_dir,'tmp'),count-1,os.path.join(output_dir,'tmp'),count-1)
+    varfind = subprocess.Popen(comm, shell=True, stdout=subprocess.PIPE,universal_newlines=True, stderr=subprocess.DEVNULL,)
     output = varfind.communicate()[0]
     #print(f'AQUI TEMOS O OUTPUT {output}')
     varfind.stdout.close()
@@ -469,15 +716,14 @@ def var_cal_fix(output_dir,count,thread,x_times,dp_cov,orig_target,fasta_len,av_
         else:
             new_fasta_temp.write(">{}\n{}\n".format(seq_record.id,seq_record.seq)) ##removi seq_mutable e substitui por seq_record.seq
     new_fasta_temp.close()     
-    #print('Checar overlap')
-    check_overlap(output_dir,os.path.join(output_dir,'tmp','snp_fasta.fasta'),av_readlen,count=count)
+    fixed = check_overlap(output_dir,os.path.join(output_dir,'tmp','snp_fasta.fasta'),av_readlen,fixed=fixed,count=count)
+    return fixed
 
 
 def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap):
     fasta_wo_N = ""
     ext_size = av_readlen*3
-    final_fasta = open(os.path.join(output_dir,'curated_seq',name_fasta+'_curated.fasta'), 'w')
-    #print(fasta_semifinal)
+    final_fasta = open(os.path.join(output_dir,'curated_seqs',name_fasta+'_fixame.fasta'), 'w')
 
     for seq_record in SeqIO.parse(fasta_semifinal,'fasta'):
         seq_mutable = seq_record.seq.tomutable()

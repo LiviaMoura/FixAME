@@ -25,14 +25,11 @@ def calculate_reference_lengths(fasta, minimum_assembly_length):
     "Calculate lengths of sequences and return a dictionary"
 
     length_dict = {}
-
     for record in SeqIO.parse(xopen(fasta), "fasta"):
         length = len(record.seq)
-
         if length >= minimum_assembly_length:
             id_ = record.id
             length_dict[id_] = length
-
     return length_dict
 
 
@@ -129,13 +126,13 @@ def check_direct_features_parallel(fasta, threads):
     return direct_features_dict
 
 
-def parse_map(bam_file, num_mm, threads):
+def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_length):
     "Parse bam file to primarily return information on read locations and mismatches. Also, calculates info on reads and pairing."
 
     template_lengths, read_lengths = [], []
     bam_dict, reference_read_lengths = defaultdict(list), defaultdict(list)
     bam_parsed = ps.AlignmentFile(bam_file, "rb", threads=threads)
-
+    
     for read in bam_parsed:
         # if read.is_paired and reference == read.next_reference_name and read.is_proper_pair and read.get_tag('NM') <= num_mm:
         # if read.is_paired and get_tag('NM') <= num_mm:
@@ -201,7 +198,7 @@ def parse_map(bam_file, num_mm, threads):
 
 def check_local_assembly_errors(reference):
     "Check for local assembly errors and identify regions with high variability"
-
+    look_len = 5 #standard value
     read_lengths = reference_read_lengths[reference]
     reference_length = reference_to_length[reference]
     reference_total_length = sum(read_lengths)
@@ -301,9 +298,10 @@ def check_local_assembly_errors(reference):
         return reference, reference_coverage, error_positions, high_mismatch_positions
 
 
-def check_local_assembly_errors_parallel(references, threads):
+def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, nm, tlm): #, ref_read_len, ref_to_len, fast_cov, bam_dic):
     "Run find_regions in parallel"
-
+    global reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max
+    reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max= rrl, rtl, fc, bd, nm, tlm
     reference_to_error_regions, coverage_dict, reference_to_high_mismatch_positions = (
         {},
         {},

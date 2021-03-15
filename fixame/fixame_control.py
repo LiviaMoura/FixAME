@@ -3,7 +3,6 @@ import os
 import logging
 import sys
 import fixame
-
 import fixame.fixame_curation
 
 __author__ = "Livia Moura"
@@ -43,6 +42,8 @@ class Controller():
             self.error_finder_operation(**vars(args))
         if args.operation == "merge":
             self.merge_operation(**vars(args))
+        #if args.operation == "find_circular":
+        #    self.find_circular_operation(**vars(args))
 
     def loadDefaultArgs(self):
         pass

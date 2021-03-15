@@ -50,8 +50,11 @@ def common_validate(**kwargs):
 
 
     if kwargs.get('bins'):
+        #print(kwargs.get('bins'))
+        #print('ENTRE')
         if not os.path.exists(kwargs.get('bins')):
             logging.info('Checking bins folder')
+            #print('EH BINSSSSSSSS E EXISTE')
             logging.error("The given path for the bins {} does not exist!".format(kwargs.get('bins'))   )
         method = 1    
     
