@@ -92,7 +92,7 @@ def parse_args(args):
 #CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\
             
-                       \u001b[32m --- CURATION workflow --- \u001b[0m
+                            \u001b[32m --- CURATION workflow --- \u001b[0m
 
             The complete workflow to curate your genome, bins or metagenome
             Here, It'll look for assembly local errors and try to fix them. 
@@ -138,94 +138,9 @@ def parse_args(args):
    
                    '''))
     # Handle the situation where the user wants the raw help
-    #args = None
-    #if (len(sys.argv) == 1 or sys.argv[1] == '-h' or sys.argv == '--help'):
     if (len(args) == 0 or args[0] == '-h' or args[0] == '--help'):
-    #if (len(args) == 0) or ('-h'in args) or ('--help'in args):
         printHelp()
         sys.exit(0)
     else:
         return parser.parse_args(args)
 
-# def parse_args(args):
-#     parser = argparse.ArgumentParser(
-#         prog='fixame',
-#         epilog="See '<command> --help'",
-#         formatter_class=fmt
-#     )
-
-#     system_parser = argparse.ArgumentParser(add_help=False)
-#     system_parser_opt = system_parser.add_argument_group('System Options')
-#     system_parser_opt.add_argument(
-#         '-t', '--threads', help='Number of threads [6]', default=6, type=int)
-#     system_parser_opt.add_argument("--keep", action="store_true", default=False,
-#                                 help="Keep intermediate files [False] (It uses a lot of disk space)")
-#     # system_parser_opt.add_argument(
-#     #    "-h", "--help", action="help", help="show this help message and exit")
-
-#     req_parser = argparse.ArgumentParser(add_help=False)
-#     req_parser_opt = req_parser.add_argument_group('Required Inputs')
-#     req_parser_opt.add_argument(
-#         '-f', '--fasta', help='fasta file for genome|metagenome [.fasta|.fa|.fna]')
-#     req_parser_opt.add_argument(
-#         '-b', '--bins', help='folder cointaining bins [.fasta|.fa|.fna]')
-#     req_parser_opt.add_argument(
-#         '-r12', help='Interlaced SYNCED forward and reverse paired-end reads')
-#     req_parser_opt.add_argument('-r1', help='Forward paired-end reads')
-#     req_parser_opt.add_argument('-r2', help='Reverse paired-end reads')
-#     req_parser_opt.add_argument('-o', '--output_dir', help="output directory")
-#     req_parser_opt.add_argument(
-#         "-l", "--min_assembly_len", action="store", help="Minimum fasta3 length")
-
-#     curation_parser = argparse.ArgumentParser(add_help=False)
-#     curation_parser_opt = curation_parser.add_argument_group('Curation')
-#     curation_parser_opt.add_argument(
-#         "-x", "--xtimes", help="Number of alignments during the curation [10]", default=1, type=int)
-#     curation_parser_opt.add_argument(
-#         "-minid", help="Minumum identity for the first alignment [0.9]", default=0.9, type=float)
-#     curation_parser_opt.add_argument(
-#         "-cov", "--fasta_cov", help="Local errors will be called on regions with coverage >= [5]", default=5, type=int)
-#     curation_parser_opt.add_argument(
-#         "--dp_cov", help="Number of reads needed to extend the gaps/curate [1]", default=1, type=int)
-#     curation_parser_opt.add_argument(
-#         "-nm", "--num_mismatch", help="Number of mismatches allowed to filter out the initial reads [2]", default=2, type=int)
-#     curation_parser_opt.add_argument("--ext_multifasta", help="Execute the merge between curated contigs [True]",
-#                                     choices=['True', 'False'], default="True")
-
-#     # Creating the subparse
-#     subparsers = parser.add_subparsers(dest='act')
-
-#     curation_call = subparsers.add_parser(
-#         'curation', help='curation option', parents=[req_parser, curation_parser, system_parser], formatter_class=fmt, add_help=False)
-
-#     merge_call = subparsers.add_parser(
-#         'merge', help='merge command', parents=[req_parser,system_parser], add_help=False )
-    
-#     error_call = subparsers.add_parser(
-#         'error_finder', help='error command', parents=[req_parser,system_parser], add_help=False )
-    
-#     find_circular_call = subparsers.add_parser(
-#         'find_circular', help='find_circular command', parents=[req_parser,system_parser], add_help=False )        
-
-
-#     # Calling menus
-#     args = parser.parse_args()
-
-
-#     if (len(sys.argv[1:]) == 0 or sys.argv[1] == '-h' or sys.argv[1] == '--help'):
-#         version = '0.9.0'
-#         printHelp(version)
-#         sys.exit(0)
-#     else:
-#         #if args.act == 'curation':
-#         return parser.parse_args(args)
-#         #elif args.act == 'error_finder':
-#         #    return parser.parse_args(args)
-#         #elif args.act == 'merge':
-#         #    return parser.parse_args(args)
-
-    
-
-
-
-  
