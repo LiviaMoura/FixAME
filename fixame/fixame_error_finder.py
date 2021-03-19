@@ -168,13 +168,28 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
                     read_lengths.append(query_length)
 
     average_template_length = pd.Series(template_lengths).mean()
-    average_read_length = pd.Series(read_lengths).mean()
+    #average_read_length = pd.Series(read_lengths).mean()
 
-    average_template_length = int(round(average_template_length))
-    average_read_length = int(round(average_read_length))
+    ## few bam metrics
+    cmd = '''samtools stats {} | grep "^SN" | cut -f 2- '''.format(bam_file)
+
+    output = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+
+    for line in output.splitlines():
+        array_line = line.split(":")
+        if (array_line[0] == 'average length'):
+            average_read_length = int(float(array_line[1].strip()))
+        if (array_line[0] == 'insert size average'):
+            average_gap_length = int(float(array_line[1].strip()))
+        if (array_line[0] == 'insert size standard deviation'):
+            average_gap_std = int(float(array_line[1].strip()))
+            
+    #print(mean_gap, mean_gap_dev)
+    #average_template_length = int(round(average_template_length))
+    #average_read_length = int(round(average_read_length))
 
     var_template_length = pd.Series(template_lengths).std()
-    var_read_length = pd.Series(read_lengths).std()
+    #var_read_length = pd.Series(read_lengths).std()
 
     template_length_min = average_template_length - var_template_length
     template_length_max = average_template_length + var_template_length
@@ -182,8 +197,10 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
     template_length_min = int(template_length_min)
     template_length_max = int(template_length_max)
 
-    average_gap_length = average_template_length - average_read_length * 2
-    average_gap_length = int(average_gap_length)
+    #average_gap_length = average_template_length - average_read_length * 2
+    #average_gap_length = int(average_gap_length)
+
+    #print(average_template_length,'TEMPLETA_LENTH',average_gap_length,'GAP_LENGH')
 
     return (
         bam_dict,
@@ -193,6 +210,7 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
         average_gap_length,
         template_length_min,
         template_length_max,
+        average_gap_std,
     )
 
 

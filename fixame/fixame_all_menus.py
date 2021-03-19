@@ -92,7 +92,7 @@ def parse_args(args):
 #CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\
             
-                            \u001b[32m --- CURATION workflow --- \u001b[0m
+                             \u001b[32m --- CURATION workflow --- \u001b[0m
 
             The complete workflow to curate your genome, bins or metagenome
             Here, It'll look for assembly local errors and try to fix them. 
@@ -111,7 +111,7 @@ def parse_args(args):
 
     error_finder_parser = subparsers.add_parser("error_finder", description=textwrap.dedent('''\
             
-                        \u001b[32m --- Error_finder script --- \u001b[0m
+                             \u001b[32m --- Error_finder script --- \u001b[0m
 
             Reports the assembly local errors positions
 
@@ -126,7 +126,7 @@ def parse_args(args):
 
     merge_parser = subparsers.add_parser("merge", description=textwrap.dedent('''\
             
-                        \u001b[32m --- Merge script --- \u001b[0m
+                             \u001b[32m --- Merge script --- \u001b[0m
 
             If possible, it'll merge contigs edges and create scaffolds based on aligned reads. 
             If bins, the merge will only considers the contigs from that BIN

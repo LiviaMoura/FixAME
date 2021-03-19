@@ -133,6 +133,7 @@ def fixame_curation_validate(**kwargs):
                 average_gap_length,
                 template_length_min,
                 template_length_max,
+                average_gap_std
             ) = parse_map(mydir+'/tmp/'+name_fasta+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
         except:
             logging.error("Something went wrong")
@@ -173,14 +174,13 @@ def fixame_curation_validate(**kwargs):
                 sys.exit()
             fixed.close()
     
-        os.mkdir(os.path.join(mydir,'curated_seqs'))
-        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length)
+        os.mkdir(os.path.join(mydir,'fixame_results'))
+        #print(orig_target,'             ',average_gap_length, average_read_length, average_gap_std)
+        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         if (kwargs.get('keep') == False):
             shutil.rmtree(os.path.join(mydir,'tmp'))
         
-
-
 
     else: # BINS MODE
         fasta_array = []
@@ -209,7 +209,7 @@ def fixame_curation_validate(**kwargs):
             logging.error("Something went wrong")
             sys.exit()
 
-        print(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',read1_in,read2_in,read12_in, name_sample+'_renewed')
+        #print(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',read1_in,read2_in,read12_in, name_sample+'_renewed')
 
         try:
             logging.info("Mapping reads against the new reference")
@@ -280,8 +280,9 @@ def fixame_curation_validate(**kwargs):
                 sys.exit()
             fixed.close()
     
-        os.mkdir(os.path.join(mydir,'curated_seqs'))
-        remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length)
+        os.mkdir(os.path.join(mydir,'fixame_results'))
+        #print(orig_target,'             ',average_gap_length)
+        remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         if (kwargs.get('keep') == False):
             try:
@@ -296,9 +297,9 @@ def fixame_curation_validate(**kwargs):
         bin_ctg_dict = dict(zip(df[0], df[1]))
 
         for k,v in bin_ctg_dict.items():
-            per_bin = open(os.path.join(mydir,'curated_seqs', k+'_fixame.fasta'),'w+')
+            per_bin = open(os.path.join(mydir,'fixame_results', k+'_fixame.fasta'),'w+')
             for contig in v:
-                for record in SeqIO.parse(os.path.join(mydir,'curated_seqs','bins_fixame.fasta'),'fasta'):
+                for record in SeqIO.parse(os.path.join(mydir,'fixame_results','bins_fixame.fasta'),'fasta'):
                     if record.id == contig:
                         per_bin.write(">{}\n{}\n".format(contig, record.seq))
             per_bin.close()
@@ -310,20 +311,10 @@ def fixame_curation_validate(**kwargs):
                         per_bin.write(">{}\n{}\n".format(contig, record.seq))
             per_bin.close()
             
-        os.remove(os.path.join(mydir,'curated_seqs', k+'_fixame.fasta'))
+        os.remove(os.path.join(mydir,'fixame_results', k+'_fixame.fasta'))
         os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
 
 
-
-
-
-
-
-            
-        
-        
-        
-    
          
            
 #    os.path.realpath(os.path.expanduser)
@@ -720,25 +711,75 @@ def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_l
     return fixed
 
 
-def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap):
+def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap, mean_gap_std, thread):
     fasta_wo_N = ""
     ext_size = av_readlen*3
-    final_fasta = open(os.path.join(output_dir,'curated_seqs',name_fasta+'_fixame.fasta'), 'w')
-
+    final_fasta = open(os.path.join(output_dir,'fixame_results',name_fasta+'_fixame.fasta'), 'w')
+    
+    # Alignment needed to selected reads #fasta_semifinal
+    aligner(output_dir, thread, 1,os.path.join(output_dir,'tmp','v_0.fasta'),r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='check_read',semi=True)
+    
     for seq_record in SeqIO.parse(fasta_semifinal,'fasta'):
         seq_mutable = seq_record.seq.tomutable()
+        
         actual_start, actual_end = 0,0
         if seq_record.id not in orig_target.keys():        
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
         else:
+            N_pos,N_target_temp = check_npos(seq_record.seq,av_readlen)
+            N_pos = N_pos[1:-1]
+            #print(N_pos, 'NPOSSSS')
+
+            #Middle
+            if N_pos:
+                seq_mutable = check_reads_N_edges(os.path.join(output_dir,'tmp'), seq_record.id, seq_mutable, seq_record.id, av_readlen,mean_gap, mean_gap_std, N_pos)
+
+            #Edges
             if orig_target[seq_record.id][0][0] == 1:
                 actual_start = orig_target[seq_record.id][0][1] + ext_size
             if orig_target[seq_record.id][-1][1] == fasta_len[seq_record.id]:
                 actual_end = orig_target[seq_record.id][-1][1] - orig_target[seq_record.id][-1][0] +1 + ext_size
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
-    final_fasta.close()     
+    final_fasta.close()   
+
+def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readlen,mean_gap, mean_gap_std, N_pos):
+    r_left = os.path.join(output_dir, "r_left")
+    r_right = os.path.join(output_dir, "r_right")
+    left_right = os.path.join(output_dir, "left_right")
+    count = 0 
+    
+    mean_frag_len = 2*av_readlen + mean_gap
+    
+    for start, end, space in N_pos:
+        #print(start,'START', end,'END', space,'SPACE')
+        cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(output_dir, seq_name,(start-mean_gap),start,r_left)
+        subprocess.run(cmd, shell=True,)
+        cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(output_dir, seq_name,end,(end+2*mean_gap), r_right)
+        subprocess.run(cmd, shell=True,)
+        cmd = '''cat {} {}| sort | uniq -d > {}'''.format(r_left, r_right, left_right)
+        subprocess.run(cmd, shell=True,)
+
+        if os.stat(left_right).st_size == 0:
+            print("We didn't find supporting reads around position {}~{} from contig {}".format(start,end,contig_name))
+            continue
+        else:
+            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
+                    grep -F -f {}| awk -F $'\t' '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(output_dir, seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+            distance = int(subprocess.check_output(cmd,universal_newlines=True, shell = True).split()[0])
+            
+            if distance < (2*av_readlen + (mean_gap + mean_gap_std) ): #rare but possible
+                seq_mutable[start+count:start+count] = (mean_frag_len - distance)*"N"                  
+                count+= mean_frag_len - distance
+            elif distance > (2*av_readlen + (mean_gap - mean_gap_std) ):
+                seq_mutable[start+count:start+count+(distance - mean_gap_std)] = ''                
+                count-= (distance - mean_gap_std)
+            else:
+                continue
+    return seq_mutable
 
 def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     len_seq = len(seq_mutable)    
