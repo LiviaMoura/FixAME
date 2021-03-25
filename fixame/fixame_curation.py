@@ -765,7 +765,7 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
         subprocess.run(cmd, shell=True,)
 
         if os.stat(left_right).st_size == 0:
-            no_support.write("We didn't find supporting reads around position {}~{} from contig {}".format(start,end,contig_name))
+            no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start,end,))
             continue
         else:
             cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
