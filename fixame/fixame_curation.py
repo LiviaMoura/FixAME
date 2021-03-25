@@ -63,6 +63,8 @@ def fixame_curation_validate(**kwargs):
         logging.info('Checking minimum contig length')
         logging.error("--min_ctg_len must be >= 800")
         sys.exit()
+    else:
+        minimum_assembly_length = kwargs.get('min_ctg_len')
     
     if kwargs.get('r12'):
         read12_in = os.path.realpath(os.path.expanduser(kwargs.get('r12')))
@@ -72,11 +74,10 @@ def fixame_curation_validate(**kwargs):
         read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
         read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
         read12_in = ''
- 
-    output_dir = os.path.abspath(kwargs.get('output_dir'))
-    av_readlen = temp_average_read(kwargs.get('r1'))
-    minimum_assembly_length = kwargs.get('min_ctg_len') 
     
+    av_readlen = temp_average_read(kwargs.get('r1'))
+    output_dir = kwargs.get('output_dir')
+
     try:
         mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
         os.mkdir(mydir)
@@ -86,7 +87,6 @@ def fixame_curation_validate(**kwargs):
         logging.info("Fixame output folder created - {}".format(mydir))
     except:
         logging.error("It wasn't possible to create fixame output folder")
-
 
     # Checking the pipeline - genome/metagenoms vs Bins
     if method == 0:
@@ -191,9 +191,9 @@ def fixame_curation_validate(**kwargs):
             name = sample.split('.')[0]
             if sample.lower().endswith(".fasta") or sample.lower().endswith(".fa") or sample.lower().endswith(".fna"):
                 fasta_array.append(sample)
-                for seq_record in SeqIO.parse(sample,'fasta'):
+                for seq_record in SeqIO.parse(os.path.join(kwargs.get('bins'),sample),'fasta'):
                     contigs_bins.write("{}\t{}\n".format(name, seq_record.id))
-                with open(sample, 'r') as readfile:
+                with open(os.path.join(kwargs.get('bins'),sample), 'r') as readfile:
                     shutil.copyfileobj(readfile, merged)
         contigs_bins.close()
         merged.close()
@@ -232,7 +232,7 @@ def fixame_curation_validate(**kwargs):
         try:
             logging.info("Generating some metrics to keep running")
             reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_sample+'_renewed.fasta', minimum_assembly_length)
-
+            print('opa')
             (   bam_dict, 
                 reference_read_lengths,
                 average_template_length,
@@ -240,6 +240,7 @@ def fixame_curation_validate(**kwargs):
                 average_gap_length,
                 template_length_min,
                 template_length_max,
+                average_gap_std,
             ) = parse_map(mydir+'/tmp/'+name_sample+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
         except:
             logging.error("Something went wrong")
@@ -733,7 +734,7 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
 
             #Middle
             if N_pos:
-                seq_mutable = check_reads_N_edges(os.path.join(output_dir,'tmp'), seq_record.id, seq_mutable, seq_record.id, av_readlen,mean_gap, mean_gap_std, N_pos)
+                seq_mutable = check_reads_N_edges(output_dir, seq_record.id, seq_mutable, seq_record.id, av_readlen,mean_gap, mean_gap_std, N_pos)
 
             #Edges
             if orig_target[seq_record.id][0][0] == 1:
@@ -745,30 +746,30 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
     final_fasta.close()   
 
 def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readlen,mean_gap, mean_gap_std, N_pos):
-    r_left = os.path.join(output_dir, "r_left")
-    r_right = os.path.join(output_dir, "r_right")
-    left_right = os.path.join(output_dir, "left_right")
+    r_left = os.path.join(output_dir,'tmp', "r_left")
+    r_right = os.path.join(output_dir,'tmp', "r_right")
+    left_right = os.path.join(output_dir,'tmp', "left_right")
     count = 0 
     
     mean_frag_len = 2*av_readlen + mean_gap
-    
+    no_support = open(os.path.join(output_dir,'fixing_log','fixame_without_read_support.txt'),'a')
     for start, end, space in N_pos:
         #print(start,'START', end,'END', space,'SPACE')
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(output_dir, seq_name,(start-mean_gap),start,r_left)
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start-mean_gap),start,r_left)
         subprocess.run(cmd, shell=True,)
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(output_dir, seq_name,end,(end+2*mean_gap), r_right)
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,end,(end+2*mean_gap), r_right)
         subprocess.run(cmd, shell=True,)
         cmd = '''cat {} {}| sort | uniq -d > {}'''.format(r_left, r_right, left_right)
         subprocess.run(cmd, shell=True,)
 
         if os.stat(left_right).st_size == 0:
-            print("We didn't find supporting reads around position {}~{} from contig {}".format(start,end,contig_name))
+            no_support.write("We didn't find supporting reads around position {}~{} from contig {}".format(start,end,contig_name))
             continue
         else:
             cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                    grep -F -f {}| awk -F $'\t' '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(output_dir, seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+                    grep -F -f {}| awk -F $'\t' '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
             distance = int(subprocess.check_output(cmd,universal_newlines=True, shell = True).split()[0])
             
             if distance < (2*av_readlen + (mean_gap + mean_gap_std) ): #rare but possible
@@ -779,6 +780,7 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
                 count-= (distance - mean_gap_std)
             else:
                 continue
+    no_support.close()
     return seq_mutable
 
 def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):

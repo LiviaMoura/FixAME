@@ -16,14 +16,16 @@ class Controller():
         self.logger = logging.getLogger()
 
     def curation_operation(self, **kwargs):
-        logging.debug("Start teste")
+        #logging.debug("Start teste")
         fixame.fixame_curation.fixame_curation_validate(**kwargs)
-        logging.debug("!!! Finished teste!!!")
+        #logging.debug("!!! Finished teste!!!")
 
-    #def error_finder_operation(self,**kwargs):
-
-    #def merge_operation(self,**kwargs):
+    def error_finder_operation(self,**kwargs):
+        pass
     
+    def merge_operation(self,**kwargs):
+        pass
+
     def parseArguments(self, args):
         ''' Organize the arguments'''
 

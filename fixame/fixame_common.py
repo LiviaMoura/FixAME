@@ -23,39 +23,34 @@ def common_validate(**kwargs):
     r2:             Reverse paired-end reads
     '''
     
-    # if kwargs.get('r12') and (kwargs.get('r1') or kwargs.get('r2')):
-    #     logging.info('Checking reads setup...') 
-    #     logging.error('You should not use -r12 and -r1 and/or -r2 together.')
-
     if kwargs.get('fasta') and kwargs.get('bins'):
         logging.info('Checking chosen mode [genome/metagenome|bin]')
         logging.error("If you want to curate --bins, do not set --fasta, and vice-versa")
+        sys.exit()
         
-    #output_dir = os.path.realpath(os.path.expanduser(kwargs.get('output_dir')))
-    #print(output_dir)
     if not os.path.exists(kwargs.get('output_dir')):
         logging.info('Checking output folder')
-        logging.error("The given path {} does not exist!".format(kwargs.get('output_dir'))   )
+        logging.error("The given path {} does not exist!".format(kwargs.get('output_dir')))
+        sys.exit()
     
     method = 0
     if kwargs.get('fasta'):
         if os.path.isfile(kwargs.get('fasta')):
             logging.info('Checking if fasta file exists')
         else:
-            logging.error('There is no fasta file {}'.format(kwargs.get('fasta'))  )
+            logging.error('There is no fasta file {}'.format(kwargs.get('fasta')))
+            sys.exit()
         
-        if not os.path.splitext(kwargs.get('fasta'))[1][1:].strip().lower() in ("fasta","fa","fna"):
-            #logging.info('Checking fasta file extention') 
+        if not os.path.splitext(kwargs.get('fasta'))[1][1:].strip().lower() in ("fasta","fa","fna"): 
             logging.error('The fasta file should be [.fasta|.fa|.fna]')
+            sys.exit()
 
 
     if kwargs.get('bins'):
-        #print(kwargs.get('bins'))
-        #print('ENTRE')
         if not os.path.exists(kwargs.get('bins')):
             logging.info('Checking bins folder')
-            #print('EH BINSSSSSSSS E EXISTE')
-            logging.error("The given path for the bins {} does not exist!".format(kwargs.get('bins'))   )
+            logging.error("The given path for the bins {} does not exist!".format(kwargs.get('bins')))
+            sys.exit()
         method = 1    
     
     return method
