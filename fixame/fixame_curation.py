@@ -769,9 +769,9 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
             continue
         else:
             print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
-            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -F $"\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -F "\t" '$9 > 0 { sum += $9; n++ } END {print int(sum/n)}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
             print(cmd)
-            distance = int(subprocess.check_output(cmd,universal_newlines=True).split()[0])
+            distance = int(subprocess.check_output(cmd,universal_newlines=True, shell=True).split()[0])
             
             if distance < (2*av_readlen + (mean_gap + mean_gap_std) ): #rare but possible
                 seq_mutable[start+count:start+count] = (mean_frag_len - distance)*"N"                  
