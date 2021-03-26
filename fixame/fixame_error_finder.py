@@ -328,7 +328,7 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
 
     with ProcessPoolExecutor(threads) as executor:
         execute_result = executor.map(check_local_assembly_errors, references)
-        #print(execute_result, 'EXECUTE RESULT')
+        print(execute_result, 'EXECUTE RESULT')
         for (
             reference,
             reference_coverage,
