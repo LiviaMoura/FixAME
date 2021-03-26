@@ -1,4 +1,5 @@
 import argparse
+import traceback
 import os
 import logging
 import sys
@@ -146,8 +147,9 @@ def fixame_curation_validate(**kwargs):
                 coverage_dict,
                 reference_to_high_mismatch_positions,
             ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
-        except: 
+        except Exception: 
             logging.error("Something went wrong")  
+            traceback.print_exc()
             sys.exit()        
         
         
@@ -768,9 +770,9 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
             no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start,end,))
             continue
         else:
-            print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+            #print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
             cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v OF="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
-            print(cmd)
+            #print(cmd)
             distance = int(subprocess.check_output(cmd,universal_newlines=True, shell=True).split()[0])
             
             if distance < (2*av_readlen + (mean_gap + mean_gap_std) ): #rare but possible

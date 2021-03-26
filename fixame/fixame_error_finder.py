@@ -319,7 +319,7 @@ def check_local_assembly_errors(reference):
 def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, nm, tlm): #, ref_read_len, ref_to_len, fast_cov, bam_dic):
     "Run find_regions in parallel"
     global reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max
-    reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max= rrl, rtl, fc, bd, nm, tlm
+    reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max = rrl, rtl, fc, bd, nm, tlm
     reference_to_error_regions, coverage_dict, reference_to_high_mismatch_positions = (
         {},
         {},
@@ -328,7 +328,7 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
 
     with ProcessPoolExecutor(threads) as executor:
         execute_result = executor.map(check_local_assembly_errors, references)
-
+        #print(execute_result, 'EXECUTE RESULT')
         for (
             reference,
             reference_coverage,
