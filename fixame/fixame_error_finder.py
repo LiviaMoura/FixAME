@@ -328,13 +328,14 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
 
     with ProcessPoolExecutor(threads) as executor:
         execute_result = executor.map(check_local_assembly_errors, references)
-        print(list(execute_result), 'EXECUTE RESULT')
+        print(list(execute_result), 'EXECUTE RESULT\n')
         for (
             reference,
             reference_coverage,
             error_positions,
             high_mismatch_positions,
         ) in execute_result:
+            print(reference, reference_coverage)
             reference_to_error_regions[reference] = error_positions
 
             coverage_dict[reference] = reference_coverage
