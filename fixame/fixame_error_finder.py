@@ -345,7 +345,7 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
 
             reference_to_high_mismatch_positions[reference] = high_mismatch_positions
 
-    return (s
+    return (
         reference_to_error_regions,
         coverage_dict,
         reference_to_high_mismatch_positions,
