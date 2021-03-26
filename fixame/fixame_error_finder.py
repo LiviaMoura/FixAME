@@ -313,7 +313,11 @@ def check_local_assembly_errors(reference):
 
         high_mismatch_positions = sorted(high_mismatch_positions)
 
-        return reference, reference_coverage, error_positions, high_mismatch_positions
+    else:
+        error_positions = set()
+        high_mismatch_positions = set()
+
+    return reference, reference_coverage, error_positions, high_mismatch_positions
 
 
 def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, nm, tlm): #, ref_read_len, ref_to_len, fast_cov, bam_dic):
@@ -335,14 +339,13 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
             error_positions,
             high_mismatch_positions,
         ) in execute_result:
-            print(reference, reference_coverage)
             reference_to_error_regions[reference] = error_positions
 
             coverage_dict[reference] = reference_coverage
 
             reference_to_high_mismatch_positions[reference] = high_mismatch_positions
 
-    return (
+    return (s
         reference_to_error_regions,
         coverage_dict,
         reference_to_high_mismatch_positions,
