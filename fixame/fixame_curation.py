@@ -95,8 +95,7 @@ def fixame_curation_validate(**kwargs):
         name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
 
         logging.info("\n --- Analysing the file {} ---\n".format(name_fasta))
-        
-                
+                        
         try:
             logging.info("Checking overlaping at N regions on {} and fix them".format(fasta_in))
             check_overlap(mydir,fasta_in,av_readlen,True)
@@ -162,10 +161,9 @@ def fixame_curation_validate(**kwargs):
             sys.exit()
 
             
-        logging.info("Starting to fix sample {}\n".format(name_fasta))      
+        logging.info("\nStarting to fix sample {}\n".format(name_fasta))      
         os.mkdir(os.path.join(mydir,'fixing_log'))
-        logging.info("Folder {} was created".format(os.path.join(mydir,'fixing_log')))      
-            
+                    
         for count,r in enumerate(range(kwargs.get('xtimes')),1):
             fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
             try:
@@ -175,13 +173,19 @@ def fixame_curation_validate(**kwargs):
                 logging.error("Something went wrong")
                 sys.exit()
             fixed.close()
-    
+        logging.info("Errors fixing complete")      
+        logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
-        #print(orig_target,'             ',average_gap_length, average_read_length, average_gap_std)
+        logging.info("Polishing the sequences...")      
         remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         if (kwargs.get('keep') == False):
-            shutil.rmtree(os.path.join(mydir,'tmp'))
+            try:
+                logging.info("Removing temporary files")
+                shutil.rmtree(os.path.join(mydir,'tmp'))
+            except:
+                logging.info("It wasn't possible to remove the /tmp folder")
+        logging.info("\n\nFixame proccess done!\n")
         
 
     else: # BINS MODE
@@ -234,7 +238,6 @@ def fixame_curation_validate(**kwargs):
         try:
             logging.info("Generating some metrics to keep running")
             reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_sample+'_renewed.fasta', minimum_assembly_length)
-            print('opa')
             (   bam_dict, 
                 reference_read_lengths,
                 average_template_length,
@@ -268,11 +271,9 @@ def fixame_curation_validate(**kwargs):
         except:
             logging.error("Something went wrong")
             sys.exit()
-
        
         logging.info("Starting to fix all bins\n")      
         os.mkdir(os.path.join(mydir,'fixing_log'))
-        logging.info("Folder {} was created".format(os.path.join(mydir,'fixing_log')))      
             
         for count,r in enumerate(range(kwargs.get('xtimes')),1):
             fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
@@ -284,8 +285,10 @@ def fixame_curation_validate(**kwargs):
                 sys.exit()
             fixed.close()
     
+        logging.info("Errors fixing complete")      
+        logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
-        #print(orig_target,'             ',average_gap_length)
+        logging.info("Polishing the sequences...")
         remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         if (kwargs.get('keep') == False):
@@ -294,7 +297,8 @@ def fixame_curation_validate(**kwargs):
                 shutil.rmtree(os.path.join(mydir,'tmp'))
             except:
                 logging.info("It wasn't possible to remove the /tmp folder")                
-
+        
+        logging.info("\nSplitting the bins\n")
         ## Spliting the bins
         df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
         df = df.groupby(0).agg({1:lambda x: list(x)}).reset_index()
@@ -317,6 +321,8 @@ def fixame_curation_validate(**kwargs):
             
         os.remove(os.path.join(mydir,'fixame_results', k+'_fixame.fasta'))
         os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
+
+        logging.info("\n\nFixame proccess done!\n")
 
 
          
@@ -656,8 +662,8 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
             for item in value:
                 error_loc.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(key,item[0],item[1],abs(item[1]-item[0]),'Local_error'))
         error_loc.close()
-    logging.warning("\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
-    logging.info("The file {} was created".format(output_dir+'/Fixame_Errors_report.txt'))                    
+    logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
+    logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))                    
 
     return dict_replace_chunked,dict_len
 
