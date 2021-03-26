@@ -257,6 +257,7 @@ def fixame_curation_validate(**kwargs):
             ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
         except: 
             logging.error("Something went wrong") 
+            traceback.print_exc()
             sys.exit()         
         
         
