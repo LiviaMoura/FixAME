@@ -173,6 +173,7 @@ def fixame_curation_validate(**kwargs):
                 logging.error("Something went wrong")
                 sys.exit()
             fixed.close()
+
         logging.info("Errors fixing complete")      
         logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
@@ -296,9 +297,9 @@ def fixame_curation_validate(**kwargs):
                 logging.info("Removing temporary files")
                 shutil.rmtree(os.path.join(mydir,'tmp'))
             except:
-                logging.info("It wasn't possible to remove the /tmp folder")                
-        
+                logging.info("It wasn't possible to remove the /tmp folder")              
         logging.info("\nSplitting the bins\n")
+
         ## Spliting the bins
         df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
         df = df.groupby(0).agg({1:lambda x: list(x)}).reset_index()
@@ -765,31 +766,36 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
     for start, end, space in N_pos:
         #print(start,'START', end,'END', space,'SPACE')
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start-mean_gap),start,r_left)
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start-mean_gap+count),(start+count), r_left)
         subprocess.run(cmd, shell=True,)
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,end,(end+2*mean_gap), r_right)
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(end+count),(end+mean_gap+count), r_right)
         subprocess.run(cmd, shell=True,)
         cmd = '''cat {} {}| sort | uniq -d > {}'''.format(r_left, r_right, left_right)
         subprocess.run(cmd, shell=True,)
 
         if os.stat(left_right).st_size == 0:
-            no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start,end,))
+            no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start+count,end+count,))
             continue
         else:
             #print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
-            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v OF="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start+count-mean_gap), (end+count+mean_gap), left_right)
             #print(cmd)
             distance = int(subprocess.check_output(cmd,universal_newlines=True, shell=True).split()[0])
             
-            if distance < (2*av_readlen + (mean_gap + mean_gap_std) ): #rare but possible
-                seq_mutable[start+count:start+count] = (mean_frag_len - distance)*"N"                  
+            if distance < (mean_frag_len - mean_gap_std) : #rare but possible
+                seq_start = int(start+count+(.1*av_readlen))
+                seq_end = int(start+count+(.1*av_readlen))
+                seq_mutable[seq_start:seq_end] = (mean_frag_len - distance)*"N"                  
                 count+= mean_frag_len - distance
-            elif distance > (2*av_readlen + (mean_gap - mean_gap_std) ):
-                seq_mutable[start+count:start+count+(distance - mean_gap_std)] = ''                
-                count-= (distance - mean_gap_std)
+            elif distance > (mean_frag_len + mean_gap_std):
+                seq_start = int(start+count+(.1*av_readlen))
+                seq_end = int(start+count+(.1*av_readlen)+(distance - mean_frag_len))
+                seq_mutable[seq_start:seq_end] = ''                
+                count-= (distance - mean_frag_len)                
             else:
                 continue
+            
     no_support.close()
     return seq_mutable
 
@@ -798,6 +804,7 @@ def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     new_fasta = ""
     ext_size = av_readlen*3
     for number in range (len_seq-(ext_size)- actual_end,len_seq):
+        print(fasta_header, len_seq, number)
         if seq_mutable[number] == "N":
             remov_end = number
             break
