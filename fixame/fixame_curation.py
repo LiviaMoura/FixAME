@@ -795,7 +795,7 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
                 count-= (distance - mean_frag_len)                
             else:
                 continue
-            
+
     no_support.close()
     return seq_mutable
 
@@ -804,7 +804,7 @@ def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     new_fasta = ""
     ext_size = av_readlen*3
     for number in range (len_seq-(ext_size)- actual_end,len_seq):
-        print(fasta_header, len_seq, number)
+        #print(fasta_header, len_seq, number)
         if seq_mutable[number] == "N":
             remov_end = number
             break
