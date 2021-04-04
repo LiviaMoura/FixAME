@@ -315,8 +315,9 @@ def fixame_curation_validate(**kwargs):
             cmd = 'filterbyname.sh in={} out={}.fasta names={} include=t'.format(os.path.join(mydir,'new_fastas','bins_renewed.fasta'), os.path.join(mydir,'new_fastas',sample_name+'_renewed.fasta'), os.path.join(mydir,'tmp','tmp_fasta'))
             subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-        #os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
-        #os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
+        os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
+        os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
+        os.remove(os.path.join(mydir,'tmp','tmp_fasta'))
 
         logging.info("\n\nFixame proccess done!\n")
 
