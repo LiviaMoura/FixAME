@@ -386,7 +386,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count='')
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
                     if fixed != '':
-                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end))                   
+                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start-(3*av_readlen),end-(3*av_readlen)))                   
                     #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                 #############################   
                     variat=(av_readlen*2)-alignments[0][3]                    
                     new_subfasta = temp_left[:-variat]+temp_right
@@ -401,7 +401,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count='')
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
                         if fixed != '':
-                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end))                   
+                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start-(3*av_readlen),end-(3*av_readlen)))                   
                         #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                    ###########################    
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
@@ -418,7 +418,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count='')
                 if comp_right in comp_left:
                     alignments = pairwise2.align.localms(comp_left,comp_right,2,-1,-.5,-.1)
                     if fixed != '':
-                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end)) 
+                        fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start-(3*av_readlen),end-(3*av_readlen))) 
                     #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######DEU MATCH")                     #####################
                     variat=(av_readlen*2)-alignments[0][3]                      
                     new_subfasta = temp_left[:-variat]+temp_right
@@ -432,7 +432,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count='')
                     if comp_left in comp_right:
                         alignments = pairwise2.align.localms(comp_right,comp_left,2,-1,-.5,-.1)
                         if fixed != '':
-                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start,end)) 
+                            fixed.write("{}\t{}\t{}\tfixed\n".format(seq_record.id,start-(3*av_readlen),end-(3*av_readlen))) 
                         #print(seq_record.id,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")              ###################
                         new_subfasta = temp_left+temp_right[alignments[0][4]:]
                         temp_dif_pos+=number+alignments[0][4]
@@ -771,7 +771,7 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
         subprocess.run(cmd, shell=True,)
 
         if os.stat(left_right).st_size == 0:
-            no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start+count,end+count,))
+            no_support.write("No read support around:\t{}:{}-{}\n".format(contig_name,start+count-(3*av_readlen),end+count-(3*av_readlen),))
             continue
         else:
             #print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
