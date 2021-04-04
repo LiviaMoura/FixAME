@@ -306,17 +306,17 @@ def fixame_curation_validate(**kwargs):
         
         for index,(sample_name,fasta_id) in df.iterrows():
             fasta_ids = '\n'.join(fasta_id)
-            tmp_id = open('tmp_fasta','w')
+            tmp_id = open(os.path.join(mydir,'tmp','tmp_fasta'),'w')
             tmp_id.write(fasta_ids)
             tmp_id.close()
-            cmd = 'filterbyname.sh in={}/bins_fixame.fasta out={}.fasta names={} include=t'.format(os.path.join(mydir,'fixame_results'), sample_name+'_fixame', 'tmp_fasta')
+            cmd = 'filterbyname.sh in={}/bins_fixame.fasta out={} names={} include=t'.format(os.path.join(mydir,'fixame_results'), sample_name+'_fixame', os.path.join(mydir,'tmp','tmp_fasta'))
             subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            cmd = 'filterbyname.sh in={}/bins_renewed.fasta out={}.fasta names={} include=t'.format(os.path.join(mydir,'new_fastas'), sample_name+'_renewed', 'tmp_fasta')
+            cmd = 'filterbyname.sh in={}/bins_renewed.fasta out={} names={} include=t'.format(os.path.join(mydir,'new_fastas'), sample_name+'_renewed', os.path.join(mydir,'tmp','tmp_fasta'))
             subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-        os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
-        os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
+        #os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
+        #os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
 
         logging.info("\n\nFixame proccess done!\n")
 
