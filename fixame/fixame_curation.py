@@ -303,24 +303,19 @@ def fixame_curation_validate(**kwargs):
         ## Spliting the bins
         df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
         df = df.groupby(0).agg({1:lambda x: list(x)}).reset_index()
-        bin_ctg_dict = dict(zip(df[0], df[1]))
+        
+        for index,(sample_name,fasta_id) in df.iterrows():
+            fasta_ids = '\n'.join(fasta_id)
+            tmp_id = open('tmp_fasta','w')
+            tmp_id.write(fasta_ids)
+            tmp_id.close()
+            cmd = 'filterbyname.sh in={}/bins_fixame.fasta out={}.fasta names={} include=t'.format(os.path.join(mydir,'fixame_results'), sample_name+'_fixame', 'tmp_fasta')
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        for k,v in bin_ctg_dict.items():
-            per_bin = open(os.path.join(mydir,'fixame_results', k+'_fixame.fasta'),'w+')
-            for contig in v:
-                for record in SeqIO.parse(os.path.join(mydir,'fixame_results','bins_fixame.fasta'),'fasta'):
-                    if record.id == contig:
-                        per_bin.write(">{}\n{}\n".format(contig, record.seq))
-            per_bin.close()
+            cmd = 'filterbyname.sh in={}/bins_renewed.fasta out={}.fasta names={} include=t'.format(os.path.join(mydir,'new_fastas'), sample_name+'_renewed', 'tmp_fasta')
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            per_bin = open(os.path.join(mydir,'new_fastas', k+'_renewed.fasta'),'w+')
-            for contig in v:
-                for record in SeqIO.parse(os.path.join(mydir,'new_fastas','bins_renewed.fasta'),'fasta'):
-                    if record.id == contig:
-                        per_bin.write(">{}\n{}\n".format(contig, record.seq))
-            per_bin.close()
-            
-        os.remove(os.path.join(mydir,'fixame_results', k+'_fixame.fasta'))
+        os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
         os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
 
         logging.info("\n\nFixame proccess done!\n")
