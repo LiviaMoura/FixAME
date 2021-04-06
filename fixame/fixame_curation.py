@@ -393,7 +393,7 @@ def check_overlap(output_dir,fasta,av_readlen,user_file=False,fixed='',count='')
                     temp_dif_pos+=number+variat
                     control_index.append(tuple([j+1,N_pos[j][2]+variat]))
                     
-            ####### REVERSE CHECK #################
+            ####### REVERSE CHECK ##########
                 else:                    
                     comp_left = temp_left[-12:]
                     comp_right = temp_right[:(av_readlen*2)]
