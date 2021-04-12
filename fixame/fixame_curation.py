@@ -724,7 +724,7 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
     final_fasta = open(os.path.join(output_dir,'fixame_results',name_fasta+'_fixame.fasta'), 'w')
     
     # Alignment needed to selected reads #fasta_semifinal
-    aligner(output_dir, thread, 1,os.path.join(output_dir,'tmp','v_0.fasta'),r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='check_read',semi=True)
+    aligner(output_dir, thread, 1, fasta_semifinal, r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='check_read',semi=True)
     
     for seq_record in SeqIO.parse(fasta_semifinal,'fasta'):
         seq_mutable = seq_record.seq.tomutable()
