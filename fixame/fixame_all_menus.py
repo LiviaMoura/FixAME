@@ -85,8 +85,8 @@ def parse_args(args):
                             default = 1, type = int)
     curflags.add_argument("-nm","--num_mismatch", metavar="INT", help="Number of mismatches allowed to filter out the initial reads [2]",
                             default = 2, type = int)
-    #curflags.add_argument("--ext_multifasta", help="Execute the merge between curated contigs [True]",
-    #                        choices=['True','False'], default = "True")                     
+    curflags.add_argument("--ext_multifasta", type=str2bool, help="Execute the merge between curated contigs [True]",
+                           choices=['True','False'], default = "True")                     
 
     #CHAMANDO OS MENUS
 #CHAMANDO OS MENUS

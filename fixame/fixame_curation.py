@@ -178,7 +178,7 @@ def fixame_curation_validate(**kwargs):
         logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
         logging.info("Polishing the sequences...")      
-        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
+        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'), kwargs.get('ext_multifasta')
 
         if (kwargs.get('keep') == False):
             try:
@@ -717,27 +717,35 @@ def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_l
     fixed = check_overlap(output_dir,os.path.join(output_dir,'tmp','snp_fasta.fasta'),av_readlen,fixed=fixed,count=count)
     return fixed
 
+def get_reads_region(first_last_Npos, contig_name, mean_gap, edges_position):
+    
 
-def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap, mean_gap_std, thread):
+
+def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap, mean_gap_std, thread, merge):
     fasta_wo_N = ""
     ext_size = av_readlen*3
     final_fasta = open(os.path.join(output_dir,'fixame_results',name_fasta+'_fixame.fasta'), 'w')
     
     # Alignment needed to selected reads #fasta_semifinal
     aligner(output_dir, thread, 1,os.path.join(output_dir,'tmp','v_0.fasta'),r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='check_read',semi=True)
-    
+    edges_position = defaultdict(list)
+
     for seq_record in SeqIO.parse(fasta_semifinal,'fasta'):
         seq_mutable = seq_record.seq.tomutable()
-        
-        actual_start, actual_end = 0,0
+        actual_start, actual_end = 0, 0
+
         if seq_record.id not in orig_target.keys():        
+            if merge == True:
+                N_pos, N_target_temp = check_npos(seq_record.seq,av_readlen)
+                edges_position = get_reads_region([N_pos[0], N_pos[-1]], seq_record.id, mean_gap, edges_position)
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
         else:
-            N_pos,N_target_temp = check_npos(seq_record.seq,av_readlen)
+            N_pos,N_target_temp = check_npos(seq_record.seq,av_readlen)            
+            if merge == True:
+                edges_position = get_reads_region([N_pos[0], N_pos[-1]], seq_record.id, mean_gap, edges_position)
             N_pos = N_pos[1:-1]
-            #print(N_pos, 'NPOSSSS')
-
+            
             #Middle
             if N_pos:
                 seq_mutable = check_reads_N_edges(output_dir, seq_record.id, seq_mutable, seq_record.id, av_readlen,mean_gap, mean_gap_std, N_pos)
