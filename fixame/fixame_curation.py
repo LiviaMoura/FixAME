@@ -762,8 +762,18 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
     for start, end, space in N_pos:
         #print(start,'START', end,'END', space,'SPACE')
         check_valid = ''
+
+        if (start - mean_gap) < 1:
+            start_mgap = 1
+        else:
+            start_mgap = start - mean_gap
+        if (end + mean_gap) > len(seq_mutable):
+            end_mgap = len(seq_mutable)
+        else:
+            end_mgap = end + mean_gap
+
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
-                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start-mean_gap+count),(start+count), r_left)
+                grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start_mgap+count),(start+count), r_left)
         subprocess.run(cmd, shell=True,)
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
                 grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(end+count),(end+mean_gap+count), r_right)
@@ -776,13 +786,13 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
             continue
         else:
             #print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
-            cmd ='''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{print}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start_mgap), (end_mgap+1), left_right)
+            cmd ='''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{print}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start_mgap+count), (end_mgap+1+count), left_right)
             check_valid = subprocess.check_output(cmd,universal_newlines=True, shell=True)
             
             if check_valid == '':
                 continue
 
-            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start+count-mean_gap), (end+count+mean_gap), left_right)
+            cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), (start_mgap+count), (end_mgap+1+count), left_right)
             #print(cmd)
             distance = int(subprocess.check_output(cmd,universal_newlines=True, shell=True).split()[0])
             if distance == 0:
