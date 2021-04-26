@@ -761,6 +761,7 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
     no_support = open(os.path.join(output_dir,'fixing_log','fixame_without_read_support.txt'),'a')
     for start, end, space in N_pos:
         #print(start,'START', end,'END', space,'SPACE')
+        check_valid = ''
         cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | \
                 grep -v "*" |cut -f 1 | sort | uniq -u > {}'''.format(os.path.join(output_dir,'tmp'), seq_name,(start-mean_gap+count),(start+count), r_left)
         subprocess.run(cmd, shell=True,)
@@ -775,20 +776,37 @@ def check_reads_N_edges(output_dir, contig_name, seq_mutable, seq_name, av_readl
             continue
         else:
             #print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
+            cmd ='''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{print}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start_mgap), (end_mgap+1), left_right)
+            check_valid = subprocess.check_output(cmd,universal_newlines=True, shell=True)
+            
+            if check_valid == '':
+                continue
+
             cmd = '''samtools view {}/check_read_sorted.bam {}:{}-{} | grep -F -f {}| awk -v FS="\\t" '$9 > 0 {{ sum += $9; n++ }} END {{print int(sum/n)}}' '''.format(os.path.join(output_dir,'tmp'), seq_name,(start+count-mean_gap), (end+count+mean_gap), left_right)
             #print(cmd)
             distance = int(subprocess.check_output(cmd,universal_newlines=True, shell=True).split()[0])
-            
+            if distance == 0:
+                continue 
+
             if distance < (mean_frag_len - mean_gap_std) : #rare but possible
-                seq_start = int(start+count+(.1*av_readlen))
-                seq_end = int(start+count+(.1*av_readlen))
+                if space <= (.1*av_readlen):
+                    seq_start = int(start+count)
+                    seq_end = int(start+count)
+                else:
+                    seq_start = int(start+count+(.1*av_readlen))
+                    seq_end = int(start+count+(.1*av_readlen))
+
                 seq_mutable[seq_start:seq_end] = (mean_frag_len - distance)*"N"                  
                 count+= mean_frag_len - distance
+
             elif distance > (mean_frag_len + mean_gap_std):
                 seq_start = int(start+count+(.1*av_readlen))
                 seq_end = int(start+count+(.1*av_readlen)+(distance - mean_frag_len))
+                if space <= (seq_end - seq_start):
+                    continue                
                 seq_mutable[seq_start:seq_end] = ''                
-                count-= (distance - mean_frag_len)                
+                count-= (distance - mean_frag_len) 
+
             else:
                 continue
 
