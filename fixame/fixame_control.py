@@ -39,6 +39,7 @@ class Controller():
 
         # Call the appropriate workflow
         if args.operation == "curation":
+            logging.info('entrei aqui')
             self.curation_operation(**vars(args))
         if args.operation == "error_finder":
             self.error_finder_operation(**vars(args))

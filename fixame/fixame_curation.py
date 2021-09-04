@@ -21,6 +21,8 @@ from fixame.fixame_error_finder import *
 
 from xopen import xopen
 
+from pathlib import Path
+
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2019"
 __maintainer__ = "Livia Moura"
@@ -89,6 +91,26 @@ def fixame_curation_validate(**kwargs):
     except:
         logging.error("It wasn't possible to create fixame output folder")
 
+    try:
+        logging.info('Checking dependencies path')
+
+        while not os.path.exists('bbmap.sh'):
+            if not os.path.exists('bbmap.sh'):
+                altpath=input('bbmap.sh directory does not exist. Please, insert the right path or install it if it is not installed.')
+                altpath = Path(altpath)
+
+                if altpath.is_dir():
+                    if not sys.path.index(altpath):
+                        sys.path.append(altpath)
+                    else:
+                        logging.info('Path already exist!!!')
+                else:
+                    logging.error('The following directory does not exist.')
+            else:
+                logging.info('Dependencies checked and working properly!!!')
+    except:
+        logging.error('Cannot check dependencies, something went wrong.')
+
     # Checking the pipeline - genome/metagenoms vs Bins
     if method == 0:
         fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
@@ -110,6 +132,9 @@ def fixame_curation_validate(**kwargs):
             aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')                
         except:
             logging.error("Something went wrong")
+            print(traceback.format_exc())
+                # or
+            print(sys.exc_info()[2])
             sys.exit()
         
         fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
@@ -292,14 +317,6 @@ def fixame_curation_validate(**kwargs):
         logging.info("Polishing the sequences...")
         remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
-        if (kwargs.get('keep') == False):
-            try:
-                logging.info("Removing temporary files")
-                shutil.rmtree(os.path.join(mydir,'tmp'))
-            except:
-                logging.info("It wasn't possible to remove the /tmp folder")              
-        logging.info("\nSplitting the bins\n")
-
         ## Spliting the bins
         df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
         df = df.groupby(0).agg({1:lambda x: list(x)}).reset_index()
@@ -318,9 +335,15 @@ def fixame_curation_validate(**kwargs):
         os.remove(os.path.join(mydir,'fixame_results', 'bins_fixame.fasta'))
         os.remove(os.path.join(mydir,'new_fastas','bins_renewed.fasta'))
         os.remove(os.path.join(mydir,'tmp','tmp_fasta'))
-
+	
+        if (kwargs.get('keep') == False):
+            try:
+                logging.info("Removing temporary files")
+                shutil.rmtree(os.path.join(mydir,'tmp'))
+            except:
+                logging.info("It wasn't possible to remove the /tmp folder")
         logging.info("\n\nFixame proccess done!\n")
-
+        
 
          
            

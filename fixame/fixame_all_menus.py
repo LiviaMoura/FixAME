@@ -63,9 +63,9 @@ def parse_args(args):
     reqflags.add_argument('-f','--fasta',help='fasta file for genome|metagenome [.fasta|.fa|.fna]')
     reqflags.add_argument('-b','--bins',help='folder cointaining bins [.fasta|.fa|.fna]')
     #reqflags.add_argument('-r12',help='Interlaced SYNCED forward and reverse paired-end reads')
-    reqflags.add_argument('-r1',metavar="R1", help='Forward paired-end reads')
-    reqflags.add_argument('-r2',metavar="R2", help='Reverse paired-end reads')
-    reqflags.add_argument('-o','--output_dir', help="output directory")
+    reqflags.add_argument('-r1',metavar="R1", help='Forward paired-end reads',required=True)
+    reqflags.add_argument('-r2',metavar="R2", help='Reverse paired-end reads',required=True)
+    reqflags.add_argument('-o','--output_dir', help="output directory",required=True)
 
     #CURATION submenu
 
