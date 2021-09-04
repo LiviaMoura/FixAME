@@ -24,7 +24,7 @@ from xopen import xopen
 from pathlib import Path
 
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2019"
+__copyright__ = "Copyright 2021"
 __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"

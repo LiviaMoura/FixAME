@@ -1,5 +1,5 @@
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2020"
+__copyright__ = "Copyright 2021"
 __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
@@ -62,14 +62,11 @@ def parse_args(args):
     reqflags = require_parser.add_argument_group('REQUIRED')
     reqflags.add_argument('-f','--fasta',help='fasta file for genome|metagenome [.fasta|.fa|.fna]')
     reqflags.add_argument('-b','--bins',help='folder cointaining bins [.fasta|.fa|.fna]')
-    #reqflags.add_argument('-r12',help='Interlaced SYNCED forward and reverse paired-end reads')
     reqflags.add_argument('-r1',metavar="R1", help='Forward paired-end reads',required=True)
     reqflags.add_argument('-r2',metavar="R2", help='Reverse paired-end reads',required=True)
     reqflags.add_argument('-o','--output_dir', help="output directory",required=True)
 
     #CURATION submenu
-
- #   curation_parser = subparsers.add_parser("curation",formatter_class=fmt,parents = [curation_parent,require_parser,system_parser], add_help=False)
 
     curation_parent = argparse.ArgumentParser(add_help=False)
     curflags = curation_parent.add_argument_group('CURATION PARAMETERS')
@@ -89,7 +86,6 @@ def parse_args(args):
     #                        choices=['True','False'], default = "True")                     
 
     #CHAMANDO OS MENUS
-#CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\
             
                              \u001b[32m --- CURATION workflow --- \u001b[0m

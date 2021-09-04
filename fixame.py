@@ -1,10 +1,10 @@
 ##!/usr/bin/env python3
 
-#***************************
-#***************************
-#*** Nosso ponto inicial ***
-#***************************
-#***************************
+#**********************************
+#**********************************
+#*** A mente é seu pior inimigo ***
+#**********************************
+#**********************************
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2021"
@@ -28,8 +28,6 @@ import fixame.fixame_all_menus
 
 if __name__ == '__main__':
     args = fixame.fixame_all_menus.parse_args(sys.argv[1:])
-    #print(args)
-    # do what you came here to do :)
     control = Controller()
     control.parseArguments(args)
 
