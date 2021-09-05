@@ -4,6 +4,7 @@ import logging
 import sys
 import fixame
 import fixame.fixame_curation
+import fixame.fixame_error_finder
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2019"
@@ -16,12 +17,12 @@ class Controller():
         self.logger = logging.getLogger()
 
     def curation_operation(self, **kwargs):
-        fixame.fixame_curation.fixame_curation_validate(**kwargs)
+        fixame.fixame_curation.main(**kwargs)
 
-    def error_finder_operation(self,**kwargs):
-        fixame.fixame_curation.fixame_curation_validate(**kwargs)
+    def error_finder_operation(self, **kwargs):
+        fixame.fixame_error_finder.main(**kwargs)
     
-    def merge_operation(self,**kwargs):
+    def merge_operation(self, **kwargs):
         pass
 
     def parseArguments(self, args):
@@ -37,7 +38,6 @@ class Controller():
 
         # Call the appropriate workflow
         if args.operation == "curation":
-            logging.info('entrei aqui')
             self.curation_operation(**vars(args))
         if args.operation == "error_finder":
             self.error_finder_operation(**vars(args))

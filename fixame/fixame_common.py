@@ -33,6 +33,16 @@ def common_validate(**kwargs):
         logging.error("The given path {} does not exist!".format(kwargs.get('output_dir')))
         sys.exit()
     
+    if (kwargs.get('minid') < 0.76) or (kwargs.get('minid') > 1.00):
+        logging.info('Checking minimum identify for the first alignment')
+        logging.error("Please, verify if -minid is >= 0.76 and <= 1.00 ")
+        sys.exit()
+
+    if (kwargs.get('num_mismatch') < 0) or (kwargs.get('num_mismatch') > 5):
+        logging.info('Checking number of mismatches allowed for the filtering reads')
+        logging.error("-num_mismatch must be 0>=x>=5")
+        sys.exit()
+    
     method = 0
     if kwargs.get('fasta'):
         if os.path.isfile(kwargs.get('fasta')):

@@ -7,13 +7,16 @@ import pysam as ps
 import pandas as pd
 from collections import defaultdict
 from xopen import xopen
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from Bio.Seq import reverse_complement
 from xopen import xopen
 from Bio import SeqIO
-import pandas as pd
 import subprocess
 import regex
+
+from fixame.fixame_common import *
+from fixame.fixame_aligner import aligner
 
 __author__ = "Rohan Sachdeva"
 __copyright__ = "Copyright 2020"
@@ -350,3 +353,57 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
         coverage_dict,
         reference_to_high_mismatch_positions,
     )
+
+def main(**kwargs):
+    if (kwargs.get('min_ctg_len') < 800):
+        logging.info('Checking minimum contig length')
+        logging.error("--min_ctg_len must be >= 800")
+        sys.exit()
+    else:
+        minimum_assembly_length = kwargs.get('min_ctg_len')
+
+    try:
+        logging.info("Mapping reads against the reference")
+        fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
+        name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
+        read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
+        read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
+        aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),fasta_in,r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')                
+    except:
+        logging.error("Something went wrong")
+        print(traceback.format_exc())
+        sys.exit()
+    
+    fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
+    
+    try:
+        logging.info("Generating some metrics to keep running")
+        reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_fasta+'_renewed.fasta', minimum_assembly_length)
+
+        (   bam_dict, 
+            reference_read_lengths,
+            average_template_length,
+            average_read_length,
+            average_gap_length,
+            template_length_min,
+            template_length_max,
+            average_gap_std
+        ) = parse_map(mydir+'/tmp/'+name_fasta+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
+    except:
+        logging.error("Something went wrong")
+        sys.exit()
+    
+    try:
+        logging.info("Trying to find regions with local assembly errors")
+        (
+            reference_to_error_regions,
+            coverage_dict,
+            reference_to_high_mismatch_positions,
+        ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
+    except Exception: 
+        logging.error("Something went wrong")  
+        traceback.print_exc()
+        sys.exit()        
+
+if __name__ == "__main__":
+    main()

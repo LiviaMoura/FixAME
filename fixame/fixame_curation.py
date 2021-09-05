@@ -29,7 +29,7 @@ __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
 
-def fixame_curation_validate(**kwargs):
+def main(**kwargs):
     '''
     *Fixame curation args:
     xtimes:         Number of alignments during the curation [10]
@@ -49,18 +49,6 @@ def fixame_curation_validate(**kwargs):
 
     *Returns:
     '''
-
-    method = common_validate(**kwargs)
-   
-    if (kwargs.get('minid') < 0.76) or (kwargs.get('minid') > 1.00):
-        logging.info('Checking minimum identify for the first alignment')
-        logging.error("Please, verify if -minid is >= 0.76 and <= 1.00 ")
-        sys.exit()
-
-    if (kwargs.get('num_mismatch') < 0) or (kwargs.get('num_mismatch') > 5):
-        logging.info('Checking number of mismatches allowed for the filtering reads')
-        logging.error("-num_mismatch must be 0>=x>=5")
-        sys.exit()
 
     if (kwargs.get('min_ctg_len') < 800):
         logging.info('Checking minimum contig length')
@@ -91,27 +79,9 @@ def fixame_curation_validate(**kwargs):
     except:
         logging.error("It wasn't possible to create fixame output folder")
 
-    try:
-        logging.info('Checking dependencies path')
-
-        while not os.path.exists('bbmap.sh'):
-            if not os.path.exists('bbmap.sh'):
-                altpath=input('bbmap.sh directory does not exist. Please, insert the right path or install it if it is not installed.')
-                altpath = Path(altpath)
-
-                if altpath.is_dir():
-                    if not sys.path.index(altpath):
-                        sys.path.append(altpath)
-                    else:
-                        logging.info('Path already exist!!!')
-                else:
-                    logging.error('The following directory does not exist.')
-            else:
-                logging.info('Dependencies checked and working properly!!!')
-    except:
-        logging.error('Cannot check dependencies, something went wrong.')
-
     # Checking the pipeline - genome/metagenoms vs Bins
+    method = common_validate(**kwargs)
+
     if method == 0:
         fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
         name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
@@ -133,8 +103,6 @@ def fixame_curation_validate(**kwargs):
         except:
             logging.error("Something went wrong")
             print(traceback.format_exc())
-                # or
-            print(sys.exc_info()[2])
             sys.exit()
         
         fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
@@ -866,3 +834,5 @@ def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     new_fasta += '>'+fasta_header+'\n'+seq_mutable[remov_start:remov_end]+'\n' 
     
     return new_fasta
+
+if __name__ == '__main__'
