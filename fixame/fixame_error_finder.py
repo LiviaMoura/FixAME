@@ -3,6 +3,7 @@ import os
 import logging
 import sys
 import fixame
+from datetime import datetime 
 import pysam as ps
 import pandas as pd
 from collections import defaultdict
@@ -363,6 +364,21 @@ def main(**kwargs):
         minimum_assembly_length = kwargs.get('min_ctg_len')
 
     try:
+        #Inicio das modificações do Arthur
+        output_dir = kwargs.get('output_dir')
+        mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
+    
+        if kwargs.get('r12'):
+            read12_in = os.path.realpath(os.path.expanduser(kwargs.get('r12')))
+            read1_in =''
+            read2_in =''
+        else:    
+            read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
+            read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
+            read12_in = ''
+
+        #Fim das modificações do Arthur
+
         logging.info("Mapping reads against the reference")
         fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
         name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
