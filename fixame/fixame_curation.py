@@ -271,7 +271,7 @@ def main(**kwargs):
             fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
             try:
                 logging.info("Loop {} from {}".format(count,kwargs.get('xtimes')))
-                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'), ,fasta_len,av_readlen)
+                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'), organized_errors, fasta_len, av_readlen)
             except:
                 logging.error("Something went wrong")
                 sys.exit()
