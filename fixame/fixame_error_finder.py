@@ -494,7 +494,7 @@ def main(**kwargs):
                 shutil.rmtree(os.path.join(mydir,'tmp'))
             except:
                 logging.info("It wasn't possible to remove the /tmp folder")
-        shutil.rmtree(os.path.join(mydir,'new_fasta'))
+        shutil.rmtree(os.path.join(mydir,'new_fastas'))
         logging.info("\n\nFixame error_finder proccess done!\n")
     
     else: # BINS MODE
@@ -578,7 +578,7 @@ def main(**kwargs):
                 shutil.rmtree(os.path.join(mydir,'tmp'))
             except:
                 logging.info("It wasn't possible to remove the /tmp folder")
-        shutil.rmtree(os.path.join(mydir,'new_fasta'))
+        shutil.rmtree(os.path.join(mydir,'new_fastas'))
         
         logging.info("\n\nFixame error_finder proccess done!\n")
 
