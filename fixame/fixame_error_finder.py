@@ -19,8 +19,8 @@ import shutil
 from fixame.fixame_common import *
 from fixame.fixame_aligner import aligner
 
-__author__ = "Rohan Sachdeva, Livia Moura"
-__copyright__ = "Copyright 2020"
+__author__ = "Rohan Sachdeva"
+__copyright__ = "Copyright 2021"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
@@ -488,7 +488,13 @@ def main(**kwargs):
             error_loc.close()
         logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
         logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))
-        
+        if (kwargs.get('keep') == False):
+            try:
+                logging.info("Removing temporary files")
+                shutil.rmtree(os.path.join(mydir,'tmp'))
+            except:
+                logging.info("It wasn't possible to remove the /tmp folder")
+        shutil.rmtree(os.path.join(mydir,'new_fasta'))
         logging.info("\n\nFixame error_finder proccess done!\n")
     
     else: # BINS MODE
@@ -565,6 +571,14 @@ def main(**kwargs):
             error_loc.close()
         logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
         logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))
+        
+        if (kwargs.get('keep') == False):
+            try:
+                logging.info("Removing temporary files")
+                shutil.rmtree(os.path.join(mydir,'tmp'))
+            except:
+                logging.info("It wasn't possible to remove the /tmp folder")
+        shutil.rmtree(os.path.join(mydir,'new_fasta'))
         
         logging.info("\n\nFixame error_finder proccess done!\n")
 

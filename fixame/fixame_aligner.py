@@ -8,8 +8,8 @@ from fixame.fixame_common import script_path
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2021"
-__maintainer__ = "Livia Moura"
-__email__ = "liviam.moura@gmail.com"
+__maintainer__ = "Livia Moura, Rohan Sachdeva"
+__email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
 
 def aligner(output_dir,thread,minid,fasta_path,r1,r2,r12,bam_out,semi=False,last=False):

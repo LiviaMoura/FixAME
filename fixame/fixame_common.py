@@ -4,8 +4,8 @@ import sys
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2021"
-__maintainer__ = "Livia Moura"
-__email__ = "liviam.moura@gmail.com"
+__maintainer__ = "Livia Moura, Rohan Sachdeva"
+__email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
 
 
@@ -78,6 +78,6 @@ def logging_config(workdir):
     root_logger.addHandler(ch)
     root_logger.propagate = False
 
-    
+
 def script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))

@@ -7,14 +7,14 @@ import fixame.fixame_curation
 import fixame.fixame_error_finder
 
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2019"
-__maintainer__ = "Livia Moura"
-__email__ = "liviam.moura@gmail.com"
+__copyright__ = "Copyright 2021"
+__maintainer__ = "Livia Moura, Rohan Sachdeva"
+__email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
 
 class Controller():
     def __init__(self):
-        self.logger = logging.getLogger()
+        pass
 
     def curation_operation(self, **kwargs):
         fixame.fixame_curation.main(**kwargs)
