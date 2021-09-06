@@ -790,4 +790,5 @@ def remove_N_slave(fasta_header,seq_mutable,actual_start,actual_end,av_readlen):
     
     return new_fasta
 
-if __name__ == '__main__'
+if __name__ == '__main__':
+    main()
