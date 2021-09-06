@@ -67,8 +67,7 @@ def parse_args(args):
     reqflags.add_argument('-r2',metavar="R2", help='Reverse paired-end reads',required=True)
     reqflags.add_argument('-o','--output_dir', help="output directory",required=True)
 
-    #CURATION submenu
-
+    # CURATION submenu
     curation_parent = argparse.ArgumentParser(add_help=False)
     curflags = curation_parent.add_argument_group('CURATION PARAMETERS')
     curflags.add_argument("-x","--xtimes", help= "Number of alignments during the curation [10]",
@@ -85,6 +84,16 @@ def parse_args(args):
                             default = 2, type = int)
     #curflags.add_argument("--ext_multifasta", help="Execute the merge between curated contigs [True]",
     #                        choices=['True','False'], default = "True")                     
+
+    # Error_finder submenu
+    error_parent = argparse.ArgumentParser(add_help=False)
+    errflags = error_parent.add_argument_group('ERROR FINDER PARAMETERS')
+    errflags.add_argument("-min","--min_ctg_len", help= "Minimun contig length [1000]",
+                            default=1000,metavar="INT", type = int)
+    errflags.add_argument("-minid",metavar="FLOAT", help="Minumum identity for alignment [0.9]",
+                            default = 0.9, type = float)
+    errflags.add_argument("-nm","--num_mismatch", metavar="INT", help="Number of mismatches allowed to filter out the initial reads [2]",
+                            default = 2, type = int)
 
     # CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\
@@ -113,7 +122,7 @@ def parse_args(args):
             Reports the assembly local errors positions
 
 
-     '''),formatter_class=argparse.RawDescriptionHelpFormatter, parents=[require_parser,system_parser], add_help=False,
+     '''),formatter_class=argparse.RawDescriptionHelpFormatter, parents=[require_parser, error_parent, system_parser], add_help=False,
     epilog=textwrap.dedent('''\
             Usage: fixame error_finder -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
                    fixame error_finder -b {bin_folder} -r12 {R12.fastq} -o {path}

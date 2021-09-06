@@ -72,8 +72,8 @@ def main(**kwargs):
     try:
         mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
         os.mkdir(mydir)
-        os.mkdir(os.path.join(mydir,'tmp'))
-        os.mkdir(os.path.join(mydir,'new_fastas'))
+        os.mkdir(os.path.join(mydir, 'tmp'))
+        os.mkdir(os.path.join(mydir, 'new_fastas'))
         logging_config(mydir)
         logging.info("Fixame output folder created - {}".format(mydir))
     except:
@@ -90,7 +90,7 @@ def main(**kwargs):
                         
         try:
             logging.info("Checking overlaping at N regions on {} and fix them".format(fasta_in))
-            check_overlap(mydir,fasta_in,av_readlen,True)
+            check_overlap(mydir, fasta_in, av_readlen, True)
             logging.info("A new reference fasta {} was created".format(mydir+'/new_fastas/'+name_fasta+'_renewed.fasta'))
         except:
             logging.error("Something went wrong")
@@ -606,7 +606,7 @@ def build_N(output_dir, threads, fasta, av_readlen, organized_errors):
                 error_loc.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(key,item[0],item[1],abs(item[1]-item[0]),'Local_error'))
         error_loc.close()
     logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
-    logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))                    
+    logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_AssemblyErrors_report.txt'))                    
 
     return dict_len
 

@@ -41,8 +41,8 @@ class Controller():
             self.curation_operation(**vars(args))
         if args.operation == "error_finder":
             self.error_finder_operation(**vars(args))
-        if args.operation == "merge":
-            self.merge_operation(**vars(args))
+        #if args.operation == "merge":
+        #    self.merge_operation(**vars(args))
         #if args.operation == "find_circular":
         #    self.find_circular_operation(**vars(args))
 
