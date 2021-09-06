@@ -356,7 +356,7 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
     )
 
 
-def organizing_found_errors(output_dir, av_readlen, dict_replace_0):
+def organizing_found_errors(av_readlen, dict_replace_0):
     dict_replace = {key: value for key, value in dict_replace_0.items() if value}
     dict_replace_chunked = defaultdict(list)     
     for key, value in dict_replace.items():        
