@@ -169,7 +169,7 @@ def main(**kwargs):
         logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
         logging.info("Polishing the sequences...")      
-        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
+        remove_N(mydir,name_fasta,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'), organized_errors, fasta_len, av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         if (kwargs.get('keep') == False):
             try:
@@ -271,7 +271,7 @@ def main(**kwargs):
             fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
             try:
                 logging.info("Loop {} from {}".format(count,kwargs.get('xtimes')))
-                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'),orig_target,fasta_len,av_readlen)
+                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'), ,fasta_len,av_readlen)
             except:
                 logging.error("Something went wrong")
                 sys.exit()
@@ -281,7 +281,7 @@ def main(**kwargs):
         logging.info("You can find the fixing log at {}".format(os.path.join(mydir,'fixing_log')))      
         os.mkdir(os.path.join(mydir,'fixame_results'))
         logging.info("Polishing the sequences...")
-        remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'),orig_target,fasta_len,av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
+        remove_N(mydir,name_sample,os.path.join(mydir,'tmp','v_'+str(kwargs.get('xtimes'))+'.fasta'), organized_errors, fasta_len, av_readlen, average_gap_length, average_gap_std, kwargs.get('threads'))
 
         ## Spliting the bins
         df = pd.read_table(os.path.join(mydir,'bin_contigs.txt'), header=None)
@@ -535,7 +535,7 @@ def filtering_bam(output_dir,thread,num_mm,bam_sorted,r1,r2,r12):
     #varpath=script_path()
     subprocess.call([os.path.join('filterbyname.sh'), 'in='+r1, 'in2='+r2, 'out='+output_dir+'/tmp/res_R1.fastq', 'out2='+output_dir+'/tmp/res_R2.fastq', 'names='+output_dir+'/tmp/matched_reads', 'include=t','overwrite=t'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
 
-def build_N(output_dir,threads,fasta,av_readlen,organized_errors):
+def build_N(output_dir, threads, fasta, av_readlen, organized_errors):
     ''' Replace error for N and extend the contig's edges for N - pre-curation step'''
     
     if os.path.exists(os.path.join(output_dir,'tmp',"target")): ### remove target file if it exists
@@ -611,7 +611,7 @@ def build_N(output_dir,threads,fasta,av_readlen,organized_errors):
     return dict_len
 
 
-def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_len,av_readlen):    
+def var_cal_fix(output_dir, count, fixed, thread, x_times, dp_cov, organized_errors, fasta_len, av_readlen):    
     '''Find changes on Ns position and replace them'''
     
     aligner(output_dir,thread,0,os.path.join(output_dir,'tmp','v_'+str(count-1)+'.fasta'),r1=os.path.join(output_dir,'tmp','res_R1.fastq'),r2=os.path.join(output_dir,'tmp','res_R2.fastq'),r12="", bam_out='v_'+str(count-1),semi=True)
@@ -664,7 +664,7 @@ def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_l
     return fixed
 
 
-def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_readlen,mean_gap, mean_gap_std, thread):
+def remove_N(output_dir, name_fasta, fasta_semifinal, organized_errors, fasta_len, av_readlen, mean_gap, mean_gap_std, thread):
     fasta_wo_N = ""
     ext_size = av_readlen*3
     final_fasta = open(os.path.join(output_dir,'fixame_results',name_fasta+'_fixame.fasta'), 'w')
@@ -676,7 +676,7 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
         seq_mutable = seq_record.seq.tomutable()
         
         actual_start, actual_end = 0,0
-        if seq_record.id not in orig_target.keys():        
+        if seq_record.id not in organized_errors.keys():        
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
         else:
@@ -689,10 +689,10 @@ def remove_N(output_dir,name_fasta,fasta_semifinal,orig_target,fasta_len,av_read
                 seq_mutable = check_reads_N_edges(output_dir, seq_record.id, seq_mutable, seq_record.id, av_readlen,mean_gap, mean_gap_std, N_pos)
 
             #Edges
-            if orig_target[seq_record.id][0][0] == 1:
-                actual_start = orig_target[seq_record.id][0][1] + ext_size
-            if orig_target[seq_record.id][-1][1] == fasta_len[seq_record.id]:
-                actual_end = orig_target[seq_record.id][-1][1] - orig_target[seq_record.id][-1][0] +1 + ext_size
+            if organized_errors[seq_record.id][0][0] == 1:
+                actual_start = organized_errors[seq_record.id][0][1] + ext_size
+            if organized_errors[seq_record.id][-1][1] == fasta_len[seq_record.id]:
+                actual_end = organized_errors[seq_record.id][-1][1] - organized_errors[seq_record.id][-1][0] +1 + ext_size
             fasta_wo_N = remove_N_slave(seq_record.id,seq_mutable,actual_start,actual_end,av_readlen)
             final_fasta.write(str(fasta_wo_N))
     final_fasta.close()   
