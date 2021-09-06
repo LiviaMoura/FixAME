@@ -96,7 +96,6 @@ def main(**kwargs):
             logging.error("Something went wrong")
             sys.exit()
         
-        
         try:
             logging.info("Mapping reads against the new reference")
             aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')                
@@ -147,21 +146,20 @@ def main(**kwargs):
         
         try:
             logging.info("Selecting the errors regions")
-            orig_target,fasta_len = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_fasta+'_renewed.fasta',average_read_length,reference_to_error_regions)
-            
+            organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
+            fasta_len = build_N(mydir,kwargs.get('threads'), mydir+'/new_fastas/'+name_fasta+'_renewed.fasta', average_read_length, organized_errors)         
         except:
             logging.error("Something went wrong")
             sys.exit()
-
-            
+          
         logging.info("\nStarting to fix sample {}\n".format(name_fasta))      
-        os.mkdir(os.path.join(mydir,'fixing_log'))
+        os.mkdir(os.path.join(mydir, 'fixing_log'))
                     
         for count,r in enumerate(range(kwargs.get('xtimes')),1):
-            fixed = open(os.path.join(mydir,'fixing_log','fixame_loop_'+str(count)+'.txt'),'w+')
+            fixed = open(os.path.join(mydir, 'fixing_log', 'fixame_loop_'+str(count)+'.txt'), 'w+')
             try:
                 logging.info("Loop {} from {}".format(count,kwargs.get('xtimes')))
-                var_cal_fix(mydir,count,fixed,kwargs.get('threads'),kwargs.get('xtimes'),kwargs.get('dp_cov'),orig_target,fasta_len,av_readlen)
+                var_cal_fix(mydir, count, fixed, kwargs.get('threads'), kwargs.get('xtimes'), kwargs.get('dp_cov'), organized_errors, fasta_len, av_readlen)
             except:
                 logging.error("Something went wrong")
                 sys.exit()
@@ -181,19 +179,18 @@ def main(**kwargs):
                 logging.info("It wasn't possible to remove the /tmp folder")
         logging.info("\n\nFixame proccess done!\n")
         
-
     else: # BINS MODE
         fasta_array = []
         name_sample = 'bins'
-        contigs_bins = open(os.path.join(mydir,'bin_contigs.txt'), 'w+')
-        merged = open(os.path.join(mydir,'tmp','bins.fasta'),'w+')
-        for sample in os.listdir(os.path.realpath(os.path.expanduser( kwargs.get('bins') ))):
+        contigs_bins = open(os.path.join(mydir, 'bin_contigs.txt'), 'w+')
+        merged = open(os.path.join(mydir, 'tmp', 'bins.fasta'), 'w+')
+        for sample in os.listdir(os.path.realpath(os.path.expanduser(kwargs.get('bins')))):
             name = sample.split('.')[0]
             if sample.lower().endswith(".fasta") or sample.lower().endswith(".fa") or sample.lower().endswith(".fna"):
                 fasta_array.append(sample)
-                for seq_record in SeqIO.parse(os.path.join(kwargs.get('bins'),sample),'fasta'):
+                for seq_record in SeqIO.parse(os.path.join(kwargs.get('bins'), sample),'fasta'):
                     contigs_bins.write("{}\t{}\n".format(name, seq_record.id))
-                with open(os.path.join(kwargs.get('bins'),sample), 'r') as readfile:
+                with open(os.path.join(kwargs.get('bins'), sample), 'r') as readfile:
                     shutil.copyfileobj(readfile, merged)
         contigs_bins.close()
         merged.close()
@@ -203,7 +200,7 @@ def main(**kwargs):
         logging.info("\n --- Analysing a metagenome sample with {} bins ---\n".format(len(fasta_array)))
         try:
             logging.info("Checking overlaping at N regions on {} and fix them".format(fasta_in))
-            check_overlap(mydir,fasta_in, av_readlen,True)
+            check_overlap(mydir, fasta_in, av_readlen,True)
             logging.info("A new reference fasta {} was created".format(mydir+'/new_fastas/'+name_sample+'_renewed.fasta'))
         except:
             logging.error("Something went wrong")
@@ -214,7 +211,7 @@ def main(**kwargs):
         try:
             logging.info("Mapping reads against the new reference")
             
-            aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_sample+'_renewed')                
+            aligner(mydir, kwargs.get('threads'), kwargs.get('minid'), mydir+'/new_fastas/'+name_sample+'_renewed.fasta', r1=read1_in, r2=read2_in, r12=read12_in, bam_out=name_sample+'_renewed')                
         except:
             logging.error("Something went wrong")
             sys.exit()
@@ -260,7 +257,8 @@ def main(**kwargs):
         
         try:
             logging.info("Selecting the errors regions")
-            orig_target,fasta_len = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',average_read_length,reference_to_error_regions)
+            organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
+            fasta_len = build_N(mydir,kwargs.get('threads'),mydir+'/new_fastas/'+name_sample+'_renewed.fasta',average_read_length, organized_errors)
             
         except:
             logging.error("Something went wrong")
@@ -537,60 +535,18 @@ def filtering_bam(output_dir,thread,num_mm,bam_sorted,r1,r2,r12):
     #varpath=script_path()
     subprocess.call([os.path.join('filterbyname.sh'), 'in='+r1, 'in2='+r2, 'out='+output_dir+'/tmp/res_R1.fastq', 'out2='+output_dir+'/tmp/res_R2.fastq', 'names='+output_dir+'/tmp/matched_reads', 'include=t','overwrite=t'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
 
-def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
+def build_N(output_dir,threads,fasta,av_readlen,organized_errors):
     ''' Replace error for N and extend the contig's edges for N - pre-curation step'''
     
     if os.path.exists(os.path.join(output_dir,'tmp',"target")): ### remove target file if it exists
-            os.remove(os.path.join(output_dir,'tmp',"target"))    
-    
-    dict_replace = {key: value for key, value in dict_replace_0.items() if value}
-    
-    dict_replace_chunked = defaultdict(list)     
-    
-    for key, value in dict_replace.items():        
-        check_new=False
-        temp_pos= 0
-        final_list=defaultdict(list)        
-        ###tracking all pos btw the first and last value from a gap (individuals N as well)
-        for index,pos in enumerate(dict_replace[key]):
-            if index == 0:
-                final_list[key].append(pos)
-                pos_temp = pos                
-                continue                
-            else:                
-                if (pos == pos_temp + 1):
-                    check_new=False
-                else:
-                    final_list[key].append(pos_temp)
-                    if not check_new:
-                        final_list[key].append(pos)
-                        check_new=True
-                    else:                       
-                        final_list[key].append(pos)
-                        check_new=False
-                pos_temp = pos
-        
-        final_list[key].append(pos)
-
-        ### merging regions if they are too close (80% of readlength)
-        temp_list=list()
-        for i in range(1,len(final_list[key])-1,2):
-            if final_list[key][i+1] - final_list[key][i] < (av_readlen*0.8):
-                temp_list.extend([i,i+1])
-
-        for item in sorted(temp_list, reverse=True):
-            del final_list[key][item]
-        
-        for i in range(0, len(final_list[key]), 2):
-            dict_replace_chunked[key].append(tuple(final_list[key][i:i+2]))            
+            os.remove(os.path.join(output_dir,'tmp',"target"))                
 
      # #---------------- Replace region for N ---------------------------
-    #new_fasta =''
     dict_error_pos = defaultdict(list)
     dict_only_errors = defaultdict(list)
     dict_len = defaultdict()           
     ext_size = av_readlen*3    
-    set_keys = set(dict_replace_chunked.keys())  
+    set_keys = set(organized_errors.keys())  
     
     fasta_N = open(os.path.join(output_dir,'tmp','v_0.fasta'),'w')
     target = open(os.path.join(output_dir,'tmp','target'), 'w')
@@ -605,7 +561,7 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
             count=0
             target.write("{}\t{}\t{}\n".format(seq_record.id,"1",ext_size))
             
-            for j,(start,end) in enumerate(dict_replace_chunked[seq_record.id]):   ## Add N after the end position
+            for j,(start,end) in enumerate(organized_errors[seq_record.id]):   ## Add N after the end position
                 seq_mutable[start-1+count:end+count] = (end-start+1)*"N"
                 dict_error_pos[seq_record.id].append(list([start+(ext_size)*(j+1),end+(ext_size)*(j+2)]))
                 seq_mutable[end+count:end+count] = "N" * ext_size                  
@@ -639,8 +595,7 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
     fasta_N.close()
     target.close()
 
-    #print(dict_only_errors,'dict_only_errors')
-    with open(os.path.join(output_dir,'Fixame_Errors_report.txt'),'w+') as error_loc:
+    with open(os.path.join(output_dir,'Fixame_AssemblyErrors_report.txt'),'w+') as error_loc:
         error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
         counter_err, counter_contigs = 0,0
         for key,value in dict_only_errors.items():
@@ -653,7 +608,7 @@ def build_N(output_dir,threads,fasta,av_readlen,dict_replace_0):
     logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
     logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))                    
 
-    return dict_replace_chunked,dict_len
+    return dict_len
 
 
 def var_cal_fix(output_dir,count,fixed,thread,x_times,dp_cov,orig_target,fasta_len,av_readlen):    

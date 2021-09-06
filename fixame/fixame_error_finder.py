@@ -1,8 +1,6 @@
-import argparse
 import os
 import logging
 import sys
-import fixame
 from datetime import datetime 
 import pysam as ps
 import pandas as pd
@@ -15,16 +13,18 @@ from xopen import xopen
 from Bio import SeqIO
 import subprocess
 import regex
+import shutil
 
 from fixame.fixame_common import *
 from fixame.fixame_aligner import aligner
 
-__author__ = "Rohan Sachdeva"
+__author__ = "Rohan Sachdeva, Livia Moura"
 __copyright__ = "Copyright 2020"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
    
+
 def calculate_reference_lengths(fasta, minimum_assembly_length):
     "Calculate lengths of sequences and return a dictionary"
 
@@ -220,7 +220,7 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
 
 def check_local_assembly_errors(reference):
     "Check for local assembly errors and identify regions with high variability"
-    look_len = 5 #standard value
+    look_len = 5  # standard value
     read_lengths = reference_read_lengths[reference]
     reference_length = reference_to_length[reference]
     reference_total_length = sum(read_lengths)
@@ -355,6 +355,48 @@ def check_local_assembly_errors_parallel(references, threads, rrl, rtl, fc, bd, 
         reference_to_high_mismatch_positions,
     )
 
+
+def organizing_found_errors(output_dir, av_readlen, dict_replace_0):
+    dict_replace = {key: value for key, value in dict_replace_0.items() if value}
+    dict_replace_chunked = defaultdict(list)     
+    for key, value in dict_replace.items():        
+        check_new = False
+        final_list = defaultdict(list)        
+        ###tracking all pos btw the first and last value from a gap (individuals N as well)
+        for index, pos in enumerate(dict_replace[key]):
+            if index == 0:
+                final_list[key].append(pos)
+                pos_temp = pos                
+                continue                
+            else:                
+                if (pos == pos_temp + 1):
+                    check_new = False
+                else:
+                    final_list[key].append(pos_temp)
+                    if not check_new:
+                        final_list[key].append(pos)
+                        check_new = True
+                    else:                       
+                        final_list[key].append(pos)
+                        check_new = False
+                pos_temp = pos
+        
+        final_list[key].append(pos)
+
+        ### merging regions if they are too close (80% of readlength)
+        temp_list = list()
+        for i in range(1,len(final_list[key])-1,2):
+            if final_list[key][i+1] - final_list[key][i] < (av_readlen*0.8):
+                temp_list.extend([i,i+1])
+
+        for item in sorted(temp_list, reverse=True):
+            del final_list[key][item]
+        
+        for i in range(0, len(final_list[key]), 2):
+            dict_replace_chunked[key].append(tuple(final_list[key][i:i+2]))
+    return dict_replace_chunked
+
+
 def main(**kwargs):
     if (kwargs.get('min_ctg_len') < 800):
         logging.info('Checking minimum contig length')
@@ -363,63 +405,164 @@ def main(**kwargs):
     else:
         minimum_assembly_length = kwargs.get('min_ctg_len')
 
-    try:
-        #Inicio das modificações do Arthur
-        output_dir = kwargs.get('output_dir')
-        mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
-    
-        if kwargs.get('r12'):
+    if kwargs.get('r12'):
             read12_in = os.path.realpath(os.path.expanduser(kwargs.get('r12')))
             read1_in =''
             read2_in =''
-        else:    
-            read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
-            read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
-            read12_in = ''
-
-        #Fim das modificações do Arthur
-
-        logging.info("Mapping reads against the reference")
-        fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
-        name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
+    else:    
         read1_in = os.path.realpath(os.path.expanduser(kwargs.get('r1')))
         read2_in = os.path.realpath(os.path.expanduser(kwargs.get('r2')))
-        aligner(mydir,kwargs.get('threads'),kwargs.get('minid'),fasta_in,r1=read1_in,r2=read2_in,r12=read12_in, bam_out=name_fasta+'_renewed')                
-    except:
-        logging.error("Something went wrong")
-        print(traceback.format_exc())
-        sys.exit()
-    
-    fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
-    
-    try:
-        logging.info("Generating some metrics to keep running")
-        reference_to_length = calculate_reference_lengths(mydir+'/new_fastas/'+name_fasta+'_renewed.fasta', minimum_assembly_length)
+        read12_in = ''
 
-        (   bam_dict, 
-            reference_read_lengths,
-            average_template_length,
-            average_read_length,
-            average_gap_length,
-            template_length_min,
-            template_length_max,
-            average_gap_std
-        ) = parse_map(mydir+'/tmp/'+name_fasta+'_renewed_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
-    except:
-        logging.error("Something went wrong")
-        sys.exit()
-    
+    # av_readlen = temp_average_read(kwargs.get('r1'))
+    output_dir = kwargs.get('output_dir')
+
     try:
-        logging.info("Trying to find regions with local assembly errors")
-        (
-            reference_to_error_regions,
-            coverage_dict,
-            reference_to_high_mismatch_positions,
-        ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
-    except Exception: 
-        logging.error("Something went wrong")  
-        traceback.print_exc()
-        sys.exit()        
+        mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
+        os.mkdir(mydir)
+        os.mkdir(os.path.join(mydir,'tmp'))
+        logging.info("Fixame output folder created - {}".format(mydir))
+    except:
+        logging.error("It wasn't possible to create fixame output folder")
+    
+    if method == 0:
+        fasta_in = os.path.realpath(os.path.expanduser(kwargs.get('fasta')))
+        name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
+
+        logging.info("\n --- Analysing the file {} ---\n".format(name_fasta))
+
+        try:
+            logging.info("Mapping reads against the reference")
+            aligner(mydir,kwargs.get('threads'),kwargs.get('minid'), fasta_in, r1=read1_in, r2=read2_in, r12=read12_in, bam_out=name_fasta)                
+        except:
+            logging.error("Something went wrong")
+            print(traceback.format_exc())
+            sys.exit()
+        
+        fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
+        
+        try:
+            logging.info("Generating some metrics to keep running")
+            reference_to_length = calculate_reference_lengths(fasta_in, minimum_assembly_length)
+
+            (   bam_dict, 
+                reference_read_lengths,
+                average_template_length,
+                average_read_length,
+                average_gap_length,
+                template_length_min,
+                template_length_max,
+                average_gap_std
+            ) = parse_map(mydir+'/tmp/'+name_fasta+'_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Trying to find regions with local assembly errors")
+            (
+                reference_to_error_regions,
+                coverage_dict,
+                reference_to_high_mismatch_positions,
+            ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
+        except Exception: 
+            logging.error("Something went wrong")  
+            traceback.print_exc()
+            sys.exit()
+        
+        organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
+
+        with open(os.path.join(output_dir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
+            error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
+            counter_err, counter_contigs = 0,0
+            for key,value in organized_errors.items():
+                logging.debug("{} possibly local errors at contig {}".format(len(value), key))
+                counter_err += len(value)
+                counter_contigs += 1
+                for item in value:
+                    error_loc.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(key,item[0],item[1],abs(item[1]-item[0]),'Local_error'))
+            error_loc.close()
+        logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
+        logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))
+        
+        logging.info("\n\nFixame error_finder proccess done!\n")
+    
+    else: # BINS MODE
+        fasta_array = []
+        name_sample = 'bins'
+        contigs_bins = open(os.path.join(mydir, 'bin_contigs.txt'), 'w+')
+        merged = open(os.path.join(mydir, 'tmp', 'bins.fasta'), 'w+')
+        for sample in os.listdir(os.path.realpath(os.path.expanduser(kwargs.get('bins')))):
+            name = sample.split('.')[0]
+            if sample.lower().endswith(".fasta") or sample.lower().endswith(".fa") or sample.lower().endswith(".fna"):
+                fasta_array.append(sample)
+                for seq_record in SeqIO.parse(os.path.join(kwargs.get('bins'), sample),'fasta'):
+                    contigs_bins.write("{}\t{}\n".format(name, seq_record.id))
+                with open(os.path.join(kwargs.get('bins'), sample), 'r') as readfile:
+                    shutil.copyfileobj(readfile, merged)
+        contigs_bins.close()
+        merged.close()
+
+        fasta_in = os.path.join(mydir,'tmp','bins.fasta')
+        name_sample = 'bins'
+
+        logging.info("\n --- Analysing a metagenome sample with {} bins ---\n".format(len(fasta_array)))
+
+        try:
+            logging.info("Mapping reads against the reference")
+            aligner(mydir,kwargs.get('threads'),kwargs.get('minid'), fasta_in, r1=read1_in, r2=read2_in, r12=read12_in, bam_out=name_sample)                
+        except:
+            logging.error("Something went wrong")
+            print(traceback.format_exc())
+            sys.exit()
+        
+        fasta_cov, num_mm = kwargs.get('fasta_cov'), kwargs.get('num_mismatch')
+        
+        try:
+            logging.info("Generating some metrics to keep running")
+            reference_to_length = calculate_reference_lengths(fasta_in, minimum_assembly_length)
+
+            (   bam_dict, 
+                reference_read_lengths,
+                average_template_length,
+                average_read_length,
+                average_gap_length,
+                template_length_min,
+                template_length_max,
+                average_gap_std
+            ) = parse_map(mydir+'/tmp/'+name_sample+'_sorted.bam', num_mm, kwargs.get('threads'), minimum_assembly_length, reference_to_length)
+        except:
+            logging.error("Something went wrong")
+            sys.exit()
+        
+        try:
+            logging.info("Trying to find regions with local assembly errors")
+            (
+                reference_to_error_regions,
+                coverage_dict,
+                reference_to_high_mismatch_positions,
+            ) = check_local_assembly_errors_parallel(reference_to_length.keys(), kwargs.get('threads'), reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm,template_length_max)                
+        except Exception: 
+            logging.error("Something went wrong")  
+            traceback.print_exc()
+            sys.exit()
+        
+        organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
+
+        with open(os.path.join(output_dir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
+            error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
+            counter_err, counter_contigs = 0,0
+            for key,value in organized_errors.items():
+                logging.debug("{} possibly local errors at contig {}".format(len(value), key))
+                counter_err += len(value)
+                counter_contigs += 1
+                for item in value:
+                    error_loc.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(key,item[0],item[1],abs(item[1]-item[0]),'Local_error'))
+            error_loc.close()
+        logging.warning("\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(counter_err,counter_contigs))
+        logging.info("The file containing the detected errors {} was created".format(output_dir+'/Fixame_Errors_report.txt'))
+        
+        logging.info("\n\nFixame error_finder proccess done!\n")
 
 if __name__ == "__main__":
     main()

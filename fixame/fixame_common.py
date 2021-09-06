@@ -1,9 +1,6 @@
-import argparse
 import os
 import logging
 import sys
-import fixame
-from xopen import xopen
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2021"
@@ -64,6 +61,7 @@ def common_validate(**kwargs):
         method = 1    
     
     return method
+
 
 def script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))

@@ -12,9 +12,7 @@ __maintainer__ = "Livia Moura"
 __email__ = "liviam.moura@gmail.com"
 __status__ = "Development"
 
-import argparse 
 import sys
-import os
 from fixame.fixame_control import Controller
 
 if sys.version_info[0] < 3:

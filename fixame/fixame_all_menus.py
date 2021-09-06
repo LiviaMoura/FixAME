@@ -46,18 +46,19 @@ Ex.: fixame [curation|error_finder|merge|find_circular] --help
 
 ''')
 
+
 def parse_args(args):
     parser = argparse.ArgumentParser(formatter_class=fmt)
     subparsers = parser.add_subparsers(help='Desired operation',dest='operation')
 
-    #SYSTEM submenu
+    # SYSTEM submenu
     system_parser = argparse.ArgumentParser(add_help=False)
     sysflags = system_parser.add_argument_group('SYSTEM')
     sysflags.add_argument('-t','--threads',help='Number of threads [6]',default=6,type=int)
     sysflags.add_argument("--keep", action="store_true", default=False, help="Keep intermediate files [False] (It uses a lot of disk space)")
     sysflags.add_argument("-h", "--help", action="help", help="show this help message and exit")
 
-    #REQUERIMENTS submenu
+    # REQUERIMENTS submenu
     require_parser = argparse.ArgumentParser(add_help=False)
     reqflags = require_parser.add_argument_group('REQUIRED')
     reqflags.add_argument('-f','--fasta',help='fasta file for genome|metagenome [.fasta|.fa|.fna]')
@@ -85,7 +86,7 @@ def parse_args(args):
     #curflags.add_argument("--ext_multifasta", help="Execute the merge between curated contigs [True]",
     #                        choices=['True','False'], default = "True")                     
 
-    #CHAMANDO OS MENUS
+    # CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\
             
                              \u001b[32m --- CURATION workflow --- \u001b[0m
