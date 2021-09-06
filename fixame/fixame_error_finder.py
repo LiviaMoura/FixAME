@@ -398,6 +398,8 @@ def organizing_found_errors(av_readlen, dict_replace_0):
 
 
 def main(**kwargs):
+    method = common_validate(**kwargs)
+    
     if (kwargs.get('min_ctg_len') < 800):
         logging.info('Checking minimum contig length')
         logging.error("--min_ctg_len must be >= 800")
