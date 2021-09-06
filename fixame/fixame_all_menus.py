@@ -94,6 +94,8 @@ def parse_args(args):
                             default = 0.9, type = float)
     errflags.add_argument("-nm","--num_mismatch", metavar="INT", help="Number of mismatches allowed to filter out the initial reads [2]",
                             default = 2, type = int)
+    errflags.add_argument("-cov","--fasta_cov", metavar="INT", help="Local errors will be called on regions with coverage >= [5]",
+                            default = 5, type = int)
 
     # CHAMANDO OS MENUS
     curation_parser = subparsers.add_parser("curation", description=textwrap.dedent('''\

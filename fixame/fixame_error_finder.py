@@ -15,6 +15,7 @@ import subprocess
 import regex
 import shutil
 
+
 from fixame.fixame_common import *
 from fixame.fixame_aligner import aligner
 
@@ -399,7 +400,7 @@ def organizing_found_errors(av_readlen, dict_replace_0):
 
 def main(**kwargs):
     method = common_validate(**kwargs)
-    
+
     if (kwargs.get('min_ctg_len') < 800):
         logging.info('Checking minimum contig length')
         logging.error("--min_ctg_len must be >= 800")
@@ -423,6 +424,7 @@ def main(**kwargs):
         mydir = os.path.join(output_dir,'fixame_'+datetime.now().strftime('%Y-%b-%d_%H-%M-%S'))
         os.mkdir(mydir)
         os.mkdir(os.path.join(mydir,'tmp'))
+        logging_config(mydir)
         logging.info("Fixame output folder created - {}".format(mydir))
     except:
         logging.error("It wasn't possible to create fixame output folder")

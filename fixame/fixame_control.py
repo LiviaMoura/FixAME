@@ -28,14 +28,6 @@ class Controller():
     def parseArguments(self, args):
         ''' Organize the arguments'''
 
-        # Load the workDirectory
-        #wd_loc = str(os.path.abspath(args.work_directory))
-        #wd = WorkDirectory(wd_loc)
-
-        # Set up the logger
-        #self.setup_logger(wd.get_loc('log'))
-        #logging.debug(str(args))
-
         # Call the appropriate workflow
         if args.operation == "curation":
             self.curation_operation(**vars(args))

@@ -63,5 +63,21 @@ def common_validate(**kwargs):
     return method
 
 
+def logging_config(workdir):
+    '''Configure the logging'''
+    log_file = os.path.join(workdir, "fixame.log")
+    log_formatter = logging.Formatter("[%(levelname)s] %(asctime)s %(message)s")
+    root_logger = logging.getLogger()
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(log_formatter)
+    root_logger.addHandler(file_handler)
+    root_logger.setLevel(logging.INFO)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(log_formatter)
+    root_logger.addHandler(ch)
+    root_logger.propagate = False
+
+    
 def script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))

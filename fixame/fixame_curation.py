@@ -311,26 +311,6 @@ def main(**kwargs):
         logging.info("\n\nFixame proccess done!\n")
         
 
-         
-           
-#    os.path.realpath(os.path.expanduser)
-
-def logging_config(workdir):
-    '''Configure the logging'''
-    log_file = os.path.join(workdir, "fixame.log")
-    log_formatter = logging.Formatter("[%(levelname)s] %(asctime)s %(message)s")
-    root_logger = logging.getLogger()
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(log_formatter)
-    root_logger.addHandler(file_handler)
-    root_logger.setLevel(logging.INFO)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
-    ch.setFormatter(log_formatter)
-    root_logger.addHandler(ch)
-    root_logger.propagate = False
-
-
 def temp_average_read(r1_fastq):
     '''Initial fast avg read length - It'll be recalculated with more precision later'''
     sum_read_len=0
