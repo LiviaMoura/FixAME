@@ -476,7 +476,7 @@ def main(**kwargs):
         
         organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
 
-        with open(os.path.join(output_dir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
+        with open(os.path.join(mydir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
             error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
             counter_err, counter_contigs = 0,0
             for key,value in organized_errors.items():
@@ -559,7 +559,7 @@ def main(**kwargs):
         
         organized_errors = organizing_found_errors(average_read_length, reference_to_error_regions)
 
-        with open(os.path.join(output_dir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
+        with open(os.path.join(mydir, 'Fixame_AssemblyErrors_report.txt'), 'w+') as error_loc:
             error_loc.write("contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n")
             counter_err, counter_contigs = 0,0
             for key,value in organized_errors.items():
