@@ -47,7 +47,7 @@ def check_palindrome(sequence):
         return length
 
 
-def check_direct_repeat(sequence):
+def check_concatenated_repeat(sequence):
     "Check sequence for concatenated repeats"
 
     length = len(sequence)
@@ -63,12 +63,12 @@ def check_direct_repeat(sequence):
         return length
 
 
-def check_circular(sequence, overlap_length):
+def check_terminal_repeat(sequence, overlap_length):
     "Check for potentially circular sequences"
 
     seq_length = len(sequence)
     half_seq_length = int(seq_length / 2)
-    beg_seq, end_seq = sequence[:50], sequence[-half_seq_length:]
+    beg_seq, end_seq = sequence[:overlap_length], sequence[-half_seq_length:]
     beg_seq_in_end_seq_index = end_seq.rfind(beg_seq)
 
     if beg_seq_in_end_seq_index != -1:
@@ -83,28 +83,44 @@ def check_circular(sequence, overlap_length):
 def check_direct_features(id_sequence):
     "Check sequences for palindromes, direct repeats, and potentially circular sequences"
 
+    direct_feature_dict = defaultdict(dict)
     id_, sequence = id_sequence
 
     palindrome_length = check_palindrome(sequence)
-    if palindrome_length:
-        id_feature = (id_, "palindrome", palindrome_length)
 
-        return id_feature
+    if palindrome_length:
+        direct_feature_dict[id_]["palindrome"] = palindrome_length
+        # id_feature = (id_, "palindrome", palindrome_length)
+        # return id_feature
+
+        # direct_features_dict[id_]['palindrome'] = palindrome_length
 
     else:
-        direct_repeat_length = check_direct_repeat(sequence)
+        concatenated_repeat_length = check_concatenated_repeat(sequence)
 
-        if direct_repeat_length:
-            id_feature = (id_, "direct_repeat", direct_repeat_length)
+        if concatenated_repeat_length:
+            direct_feature_dict[id_]["concatemer"] = concatenated_repeat_length
 
-            return id_feature
+            # id_feature = (id_, "concatemer", concatenated_repeat_length)
+            # return id_feature
 
         else:
+            terminal_direct_repeat_length = check_terminal_repeat(sequence, 50)
 
-            potential_circular_length = check_circular(sequence, 50)
-            if potential_circular_length:
-                id_feature = (id_, "potential_circular", potential_circular_length)
-                return id_feature
+            if terminal_direct_repeat_length:
+                direct_feature_dict[id_][
+                    "terminal_direct_repeat"
+                ] = terminal_direct_repeat_length
+
+                # id_feature = (
+                #     id_,
+                #     "terminal_direct_repeat",
+                #     terminal_direct_repeat_length,
+                # )
+
+                # return id_feature
+
+    return direct_feature_dict
 
 
 def check_direct_features_parallel(fasta, threads):
