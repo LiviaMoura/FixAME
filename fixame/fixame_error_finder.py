@@ -1,5 +1,4 @@
 import os
-import logging
 import sys
 import pysam as ps
 import pandas as pd
@@ -15,7 +14,7 @@ import shutil
 
 
 from fixame.fixame_common import common_validate
-from fixame.fixame_logging import create_fixame_logging_folders, logger
+from fixame.fixame_logging import logger
 from fixame.fixame_aligner import aligner
 
 __author__ = "Rohan Sachdeva"
@@ -90,20 +89,11 @@ def check_direct_features(id_sequence):
 
     if palindrome_length:
         direct_feature_dict[id_]["palindrome"] = palindrome_length
-        # id_feature = (id_, "palindrome", palindrome_length)
-        # return id_feature
-
-        # direct_features_dict[id_]['palindrome'] = palindrome_length
-
     else:
         concatenated_repeat_length = check_concatenated_repeat(sequence)
 
         if concatenated_repeat_length:
             direct_feature_dict[id_]["concatemer"] = concatenated_repeat_length
-
-            # id_feature = (id_, "concatemer", concatenated_repeat_length)
-            # return id_feature
-
         else:
             terminal_direct_repeat_length = check_terminal_repeat(sequence, 50)
 
@@ -112,22 +102,13 @@ def check_direct_features(id_sequence):
                     "terminal_direct_repeat"
                 ] = terminal_direct_repeat_length
 
-                # id_feature = (
-                #     id_,
-                #     "terminal_direct_repeat",
-                #     terminal_direct_repeat_length,
-                # )
-
-                # return id_feature
-
     return direct_feature_dict
-
 
 def check_direct_features_parallel(fasta, threads):
     "Run direct_features in parallel"
 
-    direct_features_dict = defaultdict(dict)
     reference_tuples = []
+    features_list = list()
 
     for record in SeqIO.parse(xopen(fasta), "fasta"):
         id_sequence = (record.id, str(record.seq))
@@ -136,14 +117,11 @@ def check_direct_features_parallel(fasta, threads):
     with ProcessPoolExecutor(threads) as executor:
         execute_result = executor.map(check_direct_features, reference_tuples)
 
-        for id_feature in execute_result:
-            if id_feature:
-                id_ = id_feature[0]
-                feature, feature_length = id_feature[1], id_feature[2]
+        for direct_features_dict in execute_result:
+            if direct_features_dict:
+                features_list.append(direct_features_dict)
 
-                direct_features_dict[id_][feature] = feature_length
-
-    return direct_features_dict
+    return features_list
 
 
 def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_length):
@@ -342,7 +320,7 @@ def check_local_assembly_errors(reference):
 
 def check_local_assembly_errors_parallel(
     references, threads, rrl, rtl, fc, bd, nm, tlm
-):  # , ref_read_len, ref_to_len, fast_cov, bam_dic):
+): 
     "Run find_regions in parallel"
     global reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max
     (

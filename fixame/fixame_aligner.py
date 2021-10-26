@@ -1,5 +1,6 @@
-import os
+import os, sys
 import subprocess
+from fixame.fixame_logging import logger
 
 __author__ = "Livia Moura"
 __copyright__ = "Copyright 2021"
@@ -23,7 +24,7 @@ def aligner(
     )
     if not semi:
         if not r12:
-            subprocess.run(
+            result = subprocess.run(
                 [
                     os.path.join("bbmap.sh"),
                     "ref=" + str(fasta_path),
@@ -37,10 +38,14 @@ def aligner(
                     "overwrite=t",
                 ],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
+            if 'Duplicated sequence' in str(result.stderr):
+                logger.error('There are duplicate fastas names in your fasta/bins, please fix it before running Fixame')
+                sys.exit()
+
         else:
-            subprocess.run(
+            result = subprocess.run(
                 [
                     os.path.join("bbmap.sh"),
                     "ref=" + str(fasta_path),
@@ -53,10 +58,13 @@ def aligner(
                     "overwrite=t",
                 ],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
+            if 'Duplicated sequence' in str(result.stderr):
+                logger.error('There are duplicate fastas names in your fasta/bins, please fix it before running Fixame')
+                sys.exit()
     else:
-        subprocess.run(
+        result = subprocess.run(
             [
                 os.path.join("bbmap.sh"),
                 "ref=" + str(fasta_path),
@@ -71,8 +79,11 @@ def aligner(
                 "overwrite=t",
             ],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
         )
+        if 'Duplicated sequence' in str(result.stderr):
+            logger.error('There are duplicate fastas names in your fasta/bins, \nplease fix it before running Fixame')
+            sys.exit()
 
     subprocess.run(
         [
