@@ -1180,6 +1180,10 @@ def remove_N(
         )
         unordered_fasta.write(str(fasta_wo_N))
     unordered_fasta.close()
+    records = list(SeqIO.parse(os.path.join(output_dir, "tmp", name_fasta + "_unordered.fasta"), "fasta"))
+    records.sort(key=lambda r: -len(r))
+    SeqIO.write(records, os.path.join(output_dir, "fixame_results", name_fasta + "_fixame.fasta"), "fasta")
+
 
 def check_reads_N_edges(
     output_dir,
