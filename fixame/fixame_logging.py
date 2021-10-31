@@ -15,7 +15,7 @@ def create_fixame_logging_folders(output_dir, create_folders=[]):
 
         for folder in create_folders:
             os.makedirs(os.path.join(full_path, folder))
-        
+
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise

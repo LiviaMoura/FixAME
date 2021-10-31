@@ -30,7 +30,9 @@ if sys.version_info[0] < 3:
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    full_path = create_fixame_logging_folders(args.output_dir, create_folders=["tmp", "new_fastas"])
+    full_path = create_fixame_logging_folders(
+        args.output_dir, create_folders=["tmp", "new_fastas"]
+    )
     logger = fixame_logging(logger, full_path)
     args.full_path = full_path
 

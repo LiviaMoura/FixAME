@@ -71,10 +71,14 @@ def parse_args(args):
     require_parser = argparse.ArgumentParser(add_help=False)
     reqflags = require_parser.add_argument_group("REQUIRED")
     reqflags.add_argument(
-        "-f", "--fasta", help="fasta file for genome|metagenome [.fasta|.fa|.fna] - Can't use --bins"
+        "-f",
+        "--fasta",
+        help="fasta file for genome|metagenome [.fasta|.fa|.fna] - Can't use --bins",
     )
     reqflags.add_argument(
-        "-b", "--bins", help="folder cointaining bins [.fasta|.fa|.fna] - Can't use --fasta"
+        "-b",
+        "--bins",
+        help="folder cointaining bins [.fasta|.fa|.fna] - Can't use --fasta",
     )
     reqflags.add_argument(
         "-r1", metavar="R1", help="Forward paired-end reads", required=True

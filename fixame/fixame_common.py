@@ -24,9 +24,7 @@ def common_validate(**kwargs):
 
     if kwargs.get("fasta") and kwargs.get("bins"):
         logger.info("Checking chosen mode [genome/metagenome|bin]")
-        logger.error(
-            "If you want to curate --bins, do not set --fasta, and vice-versa"
-        )
+        logger.error("If you want to curate --bins, do not set --fasta, and vice-versa")
         sys.exit()
 
     # if not os.path.exists(kwargs.get("output_dir")):
@@ -35,7 +33,7 @@ def common_validate(**kwargs):
     #         "The given path {} does not exist!".format(kwargs.get("output_dir"))
     #     )
     #     sys.exit()
-    
+
     #     if not os.path.exists(loc):
     #             os.makedirs(loc)
 

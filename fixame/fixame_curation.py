@@ -1,3 +1,4 @@
+from logging import error
 import os
 import sys
 import re
@@ -18,7 +19,7 @@ from fixame.fixame_error_finder import (
     parse_map,
     check_local_assembly_errors_parallel,
     organizing_found_errors,
-    check_direct_features_parallel
+    check_direct_features_parallel,
 )
 
 from functools import partial
@@ -88,7 +89,7 @@ def main(**kwargs):
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
             )
-            check_overlap(mydir, fasta_in, av_readlen, kwargs.get("threads"),True)
+            check_overlap(mydir, fasta_in, av_readlen, kwargs.get("threads"), True)
             logger.info(
                 "A new reference fasta {} was created".format(
                     mydir + "/new_fastas/" + name_fasta + "_renewed.fasta"
@@ -114,7 +115,7 @@ def main(**kwargs):
             logger.exception("Something went wrong")
             raise e
 
-        fasta_cov, num_mm  = kwargs.get("fasta_cov"), kwargs.get("num_mismatch")
+        fasta_cov, num_mm = kwargs.get("fasta_cov"), kwargs.get("num_mismatch")
 
         # Filtering the fastq - Make curation process faster
         try:
@@ -160,8 +161,10 @@ def main(**kwargs):
             raise e
 
         features_list_dict = check_direct_features_parallel(
-            mydir + "/new_fastas/" + name_fasta + "_renewed.fasta", kwargs.get("threads"))
-    
+            mydir + "/new_fastas/" + name_fasta + "_renewed.fasta",
+            kwargs.get("threads"),
+        )
+
         try:
             logger.info("Trying to find regions with local assembly errors")
             (
@@ -195,7 +198,7 @@ def main(**kwargs):
                 average_read_length,
                 organized_errors,
             )
-            
+
         except Exception as e:
             logger.exception("Something went wrong")
             raise e
@@ -217,7 +220,7 @@ def main(**kwargs):
                     kwargs.get("threads"),
                     kwargs.get("dp_cov"),
                     av_readlen,
-                    error_df
+                    error_df,
                 )
             except Exception as e:
                 logger.exception("Something went wrong")
@@ -245,8 +248,20 @@ def main(**kwargs):
             kwargs.get("threads"),
         )
 
-        error_df['sample_name'] = name_fasta
-        error_df.to_csv(os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"), columns=['contig', 'start', 'end', 'type_of_error', 'status', 'sample_name'], index=None, sep='\t')
+        error_df["sample_name"] = name_fasta
+        error_df.to_csv(
+            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"),
+            columns=[
+                "contig",
+                "start",
+                "end",
+                "type_of_error",
+                "status",
+                "sample_name",
+            ],
+            index=None,
+            sep="\t",
+        )
 
         # extra_features = open(os.path.join(mydir, 'Fixame_features.txt'), "w+")
         # if features_list_dict:
@@ -267,8 +282,8 @@ def main(**kwargs):
     else:  # BINS MODE
         fasta_array = []
         name_sample = "bins"
-        contigs_bins = open(os.path.join(mydir, 'tmp', 'bin_contigs.txt'), "w+")
-        #contigs_bins = defaultdict(list)
+        contigs_bins = open(os.path.join(mydir, "tmp", "bin_contigs.txt"), "w+")
+        # contigs_bins = defaultdict(list)
         merged = open(os.path.join(mydir, "tmp", "bins.fasta"), "w+")
         for sample in os.listdir(
             os.path.realpath(os.path.expanduser(kwargs.get("bins")))
@@ -372,7 +387,9 @@ def main(**kwargs):
             raise e
 
         features_list_dict = check_direct_features_parallel(
-            mydir + "/new_fastas/" + name_sample + "_renewed.fasta", kwargs.get("threads"))
+            mydir + "/new_fastas/" + name_sample + "_renewed.fasta",
+            kwargs.get("threads"),
+        )
 
         try:
             logger.info("Trying to find regions with local assembly errors")
@@ -428,7 +445,7 @@ def main(**kwargs):
                     kwargs.get("threads"),
                     kwargs.get("dp_cov"),
                     av_readlen,
-                    error_df
+                    error_df,
                 )
             except Exception as e:
                 logger.exception("Something went wrong")
@@ -457,11 +474,28 @@ def main(**kwargs):
         )
 
         ## Spliting the bins
-        df = pd.read_table(os.path.join(mydir,'tmp', 'bin_contigs.txt'), names=['sample_name', 'contig'])
-        error_df = pd.merge(error_df, df, on=['contig'], how='left')
-        df = df.groupby('sample_name').agg({'contig': lambda x: list(x)}).reset_index() ######OPAAAA
-        error_df.to_csv(os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"), columns=['contig', 'start', 'end', 'type_of_error', 'status', 'sample_name'], index=None, sep='\t')
-        
+        df = pd.read_table(
+            os.path.join(mydir, "tmp", "bin_contigs.txt"),
+            names=["sample_name", "contig"],
+        )
+        error_df = pd.merge(error_df, df, on=["contig"], how="left")
+        df = (
+            df.groupby("sample_name").agg({"contig": lambda x: list(x)}).reset_index()
+        )  ######OPAAAA
+        error_df.to_csv(
+            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"),
+            columns=[
+                "contig",
+                "start",
+                "end",
+                "type_of_error",
+                "status",
+                "sample_name",
+            ],
+            index=None,
+            sep="\t",
+        )
+
         # extra_features = open(os.path.join(mydir, 'Fixame_features.txt'), "w+")
         # if features_list_dict:
         #     extra_features.write('contig\tfeature\tcount')
@@ -469,7 +503,7 @@ def main(**kwargs):
         #         for feature, v_two in v.items():
         #             extra_features.write(f'{ctg}\t{feature}\t{v_two}')
         # extra_features.close()
-        
+
         for index, (sample_name, fasta_id) in df.iterrows():
             print(sample_name, fasta_id)
             fasta_ids = "\n".join(fasta_id)
@@ -518,7 +552,16 @@ def temp_average_read(r1_fastq):
     return av_read_len
 
 
-def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_df=pd.DataFrame(), fixed="", count=""):
+def check_overlap(
+    output_dir,
+    fasta,
+    av_readlen,
+    thread,
+    user_file=False,
+    error_df=pd.DataFrame(),
+    fixed="",
+    count="",
+):
     """Check overlap from the border of N's regions"""
     if user_file:
         name_fasta = os.path.splitext(os.path.basename(fasta))[0]
@@ -529,9 +572,12 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
         if os.path.exists(
             os.path.join(output_dir, "tmp", "target")
         ):  ### remove target file if it exists
-            #copied = open(os.path.join(output_dir, "tmp", "target_"+str(count)), "w+")
-            shutil.copyfile(os.path.join(output_dir, "tmp", "target"), os.path.join(output_dir, "tmp", "target_"+str(count)))
-            #copied.close()
+            # copied = open(os.path.join(output_dir, "tmp", "target_"+str(count)), "w+")
+            shutil.copyfile(
+                os.path.join(output_dir, "tmp", "target"),
+                os.path.join(output_dir, "tmp", "target_" + str(count)),
+            )
+            # copied.close()
             os.remove(os.path.join(output_dir, "tmp", "target"))
 
         new_fasta_temp = open(
@@ -542,7 +588,7 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
 
     with ProcessPoolExecutor(thread) as executor:
         check_npos_result = executor.map(partial(check_npos, av_readlen), items)
-    
+
     npos_list = list()
     ntarget_list = list()
 
@@ -552,13 +598,13 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
 
     N_pos = {}
     N_target = {}
-    for i in (npos_list):
+    for i in npos_list:
         N_pos.update(i)
-    for i in (ntarget_list):
+    for i in ntarget_list:
         N_target.update(i)
-    
+
     if not user_file:
-        for k,v in N_pos.items():
+        for k, v in N_pos.items():
             new_value = v[1:-1]
             N_pos[k] = new_value
 
@@ -573,7 +619,22 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
 
         if contig_name in N_pos.keys():
             temp_dif_pos = 0
+
+            if not error_df.empty:
+                for (start, end, number) in N_pos.get(contig_name):
+                    idx = error_df.loc[
+                        (error_df["contig"] == contig_name)
+                        & ((start - error_df["N_build_start"]) <= av_readlen)
+                        & ((start - error_df["N_build_start"]) >= -av_readlen)
+                        & ((error_df["N_build_end"] - end) <= av_readlen)
+                        & ((error_df["N_build_end"] - end) >= -av_readlen)
+                    ].index.tolist()
+                    if idx:
+                        error_df.at[idx[0], "N_build_start"] = start
+                        error_df.at[idx[0], "N_build_end"] = end
+
             for j, (start, end, number) in enumerate(N_pos.get(contig_name)):
+
                 if j == 0:  ### first time doesnt have index modification
                     temp_left = item[
                         0:start
@@ -589,35 +650,66 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
                         alignments = pairwise2.align.localms(
                             comp_left, comp_right, 2, -1, -0.5, -0.1
                         )
-                        
-                        #print(contig_name,start,end,number,"start,  end,   NumberofN, #######DEU MATCH 1")                 #############################
-                        #print(alignments)
                         variat = (av_readlen * 2) - alignments[0][3]
-                        #print(variat, 'VARIAT')
                         new_subfasta = temp_left[:-variat] + temp_right
-                        control_index.append(tuple([j + 1, N_pos.get(contig_name)[j][2] + variat]))
+                        control_index.append(
+                            tuple([j + 1, N_pos.get(contig_name)[j][2] + variat])
+                        )
+
                         if fixed != "":
                             fixed.write(
                                 "{}\t{}\t{}\tfixed\n".format(
-                                    contig_name,
-                                    start - variat,
-                                    end + 1 + 12 ),
-                                )
-                        temp_dif_pos += number + variat
+                                    contig_name, start - variat, end + 1 + 12
+                                ),
+                            )
+
                         if not error_df.empty:
-                            idx = list()                            
-                            idx = error_df.loc[(error_df['contig'] == contig_name) & (error_df['status'] != "fixed") & ((start-variat) > (error_df['N_build_start'] - 2 * av_readlen)) & ((start-variat) < (error_df['N_build_end'] - 1))].index.tolist()
-                            #temp_dif_pos += number + variat
-                            if idx:                               
-                                error_df.at[idx[0],'status'] = 'fixed'
-                                error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                                #print(idx, 'IDX', error_df.at[idx[0],'order'], 'ORDER') 
+                            idx = list()
+                            idx = error_df.loc[
+                                (error_df["contig"] == contig_name)
+                                & (error_df["status"] != "fixed")
+                                & (
+                                    (start - variat)
+                                    > (error_df["N_build_start"] - 2 * av_readlen)
+                                )
+                                & ((start - variat) < (error_df["N_build_end"] - 1))
+                            ].index.tolist()
+                            temp_dif_pos += number + variat
+
+                            if idx:
+                                error_df.at[idx[0], "status"] = "fixed"
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["order"] > error_df.at[idx[0], "order"]
+                                    ),
+                                    "N_build_start",
+                                ] = (
+                                    error_df["N_build_start"] - temp_dif_pos
+                                )  # + (start - error_df['N_build_start'])
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["order"] > error_df.at[idx[0], "order"]
+                                    ),
+                                    "N_build_end",
+                                ] = (
+                                    error_df["N_build_end"] - temp_dif_pos
+                                )  # - (error_df['N_build_end'] - end)
+
                             else:
-                                error_df.loc[(error_df['contig'] == contig_name), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                error_df.loc[(error_df['contig'] == contig_name), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                       #else:
-                       #     temp_dif_pos += number + variat
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (error_df["N_build_start"] > (start - variat)),
+                                    "N_build_start",
+                                ] = (error_df["N_build_start"] - temp_dif_pos)
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (error_df["N_build_start"] > (start - variat)),
+                                    "N_build_end",
+                                ] = (error_df["N_build_end"] - temp_dif_pos)
+                        else:
+                            temp_dif_pos += number + variat
 
                     ####### REVERSE CHECK #################
                     else:
@@ -628,36 +720,77 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
                             alignments = pairwise2.align.localms(
                                 comp_right, comp_left, 2, -1, -0.5, -0.1
                             )
-                            
-                            #print(contig_name,start,end,number,"start,  end,   NumberofN, #######ESPECIAL1")                    ###########################
-                            #print(alignments)
+
                             new_subfasta = temp_left + temp_right[alignments[0][4] :]
                             control_index.append(
-                                tuple([j + 1, N_pos.get(contig_name)[j][2] + alignments[0][4]])
-                            )
-                            if fixed != "": 
-                                fixed.write(
-                                "{}\t{}\t{}\tfixed\n".format(
-                                    contig_name,
-                                    (start - 12 -1),
-                                    (end +1 + alignments[0][4])),
+                                tuple(
+                                    [
+                                        j + 1,
+                                        N_pos.get(contig_name)[j][2] + alignments[0][4],
+                                    ]
                                 )
-                            temp_dif_pos += number + alignments[0][4]
+                            )
+                            if fixed != "":
+                                fixed.write(
+                                    "{}\t{}\t{}\tfixed\n".format(
+                                        contig_name,
+                                        (start - 12 - 1),
+                                        (end + 1 + alignments[0][4]),
+                                    ),
+                                )
+
                             if not error_df.empty:
                                 idx = list()
-                                idx = error_df.loc[(error_df['contig'] == contig_name) & (error_df['status'] != "fixed") & ((end +1 + alignments[0][4]) > (error_df['N_build_start'] + 1)) & ((end +1 + alignments[0][4]) < (error_df['N_build_end'] + 2 * av_readlen))].index.tolist()
-                                #
-                                if idx:                    
-                                    error_df.at[idx[0],'status'] = 'fixed'
-                                    error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                    error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                                    #print(idx, 'IDX', error_df.at[idx[0],'order'], 'ORDER')
-                                else:                                    
-                                    error_df.loc[(error_df['contig'] == contig_name), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                    error_df.loc[(error_df['contig'] == contig_name), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                                    
-                            #else:
-                            #  temp_dif_pos += number + alignments[0][4]
+                                idx = error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (error_df["status"] != "fixed")
+                                    & (
+                                        (end + 1 + alignments[0][4])
+                                        > (error_df["N_build_start"] + 1)
+                                    )
+                                    & (
+                                        (end + 1 + alignments[0][4])
+                                        < (error_df["N_build_end"] + 2 * av_readlen)
+                                    )
+                                ].index.tolist()
+                                temp_dif_pos += number + alignments[0][4]
+
+                                if idx:
+                                    error_df.at[idx[0], "status"] = "fixed"
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["order"]
+                                            > error_df.at[idx[0], "order"]
+                                        ),
+                                        "N_build_start",
+                                    ] = (error_df["N_build_start"] - temp_dif_pos)
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["order"]
+                                            > error_df.at[idx[0], "order"]
+                                        ),
+                                        "N_build_end",
+                                    ] = (error_df["N_build_end"] - temp_dif_pos)
+                                else:
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["N_build_start"] > (start - 12 - 1)
+                                        ),
+                                        "N_build_start",
+                                    ] = (error_df["N_build_start"] - temp_dif_pos)
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["N_build_start"] > (start - 12 - 1)
+                                        ),
+                                        "N_build_end",
+                                    ] = (error_df["N_build_end"] - temp_dif_pos)
+
+                            else:
+                                temp_dif_pos += number + alignments[0][4]
                         else:
                             new_subfasta = item.seq
                 else:
@@ -675,37 +808,82 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
                         alignments = pairwise2.align.localms(
                             comp_left, comp_right, 2, -1, -0.5, -0.1
                         )
-                        
-                        #print(contig_name,start,end,number,"start,  end,   NumberofN, #######DEU MATCH 2")                     #####################
-                        #print(alignments)
+
                         variat = (av_readlen * 2) - alignments[0][3]
                         new_subfasta = temp_left[:-variat] + temp_right
-                        #print(variat, 'VARIAT', temp_dif_pos, 'temp_dif_pos' )
-                        control_index.append(tuple([j + 1, N_pos.get(contig_name)[j][2] + variat]))
+                        control_index.append(
+                            tuple([j + 1, N_pos.get(contig_name)[j][2] + variat])
+                        )
+
                         if fixed != "":
-                                fixed.write(
+                            fixed.write(
                                 "{}\t{}\t{}\tfixed\n".format(
                                     contig_name,
-                                    (start - temp_dif_pos - variat),
-                                    (end + 1 - temp_dif_pos + 12 )),
-                                )
-            
-                        temp_dif_pos += number + variat
+                                    (start - temp_dif_pos - variat - 1),
+                                    (end + 1 - temp_dif_pos + 12),
+                                ),
+                            )
+
                         if not error_df.empty:
                             idx = list()
-                            idx = error_df.loc[(error_df['contig'] == contig_name) & (error_df['status'] != "fixed") & ((start-variat) > (error_df['N_build_start'] - 2 * av_readlen)) & ((start-variat) < (error_df['N_build_end'] - 1))].index.tolist()
-                            #temp_dif_pos += number + variat
-                            if idx:                                
-                                error_df.at[idx[0],'status'] = 'fixed'
-                                error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                                #print(idx, 'IDX', error_df.at[idx[0],'order'], 'ORDER') 
+                            idx = error_df.loc[
+                                (error_df["contig"] == contig_name)
+                                & (error_df["status"] != "fixed")
+                                & (
+                                    (start - temp_dif_pos)
+                                    > (error_df["N_build_start"] - 2 * av_readlen)
+                                )
+                                & (
+                                    (start - temp_dif_pos)
+                                    < (error_df["N_build_end"] - 1)
+                                )
+                            ].index.tolist()
+                            temp_dif_pos += number + variat
+
+                            if idx:
+                                error_df.at[idx[0], "status"] = "fixed"
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["order"] > error_df.at[idx[0], "order"]
+                                    ),
+                                    "N_build_start",
+                                ] = error_df["N_build_start"] - (
+                                    number + variat
+                                )  # temp_dif_pos
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["order"] > error_df.at[idx[0], "order"]
+                                    ),
+                                    "N_build_end",
+                                ] = error_df["N_build_end"] - (
+                                    number + variat
+                                )  # temp_dif_pos
+
                             else:
-                                error_df.loc[(error_df['contig'] == contig_name), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                error_df.loc[(error_df['contig'] == contig_name), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                        #else:
-                        #    temp_dif_pos += number + variat        
-                   
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["N_build_start"] > (start - variat - 1)
+                                    ),
+                                    "N_build_start",
+                                ] = error_df["N_build_start"] - (
+                                    number + variat
+                                )  # temp_dif_pos | (start - temp_dif_pos - variat)
+                                error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (
+                                        error_df["N_build_start"] > (start - variat - 1)
+                                    ),
+                                    "N_build_end",
+                                ] = error_df["N_build_end"] - (
+                                    number + variat
+                                )  # temp_dif_pos
+
+                        else:
+                            temp_dif_pos += number + variat
+
                     #######  REVERSE CHECK  #################
                     else:
                         comp_left = temp_left[-12:]
@@ -715,45 +893,99 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
                             alignments = pairwise2.align.localms(
                                 comp_right, comp_left, 2, -1, -0.5, -0.1
                             )
-                            #print(contig_name,start,end,number,"start,  end,   NumberofN, #######ESPECIAL2")              ###################
-                            #print(alignments)
                             new_subfasta = temp_left + temp_right[alignments[0][4] :]
                             control_index.append(
-                                tuple([j + 1, N_pos.get(contig_name)[j][2] + alignments[0][4]])
-                            )
-                            if fixed != "": 
-                                fixed.write(
-                                "{}\t{}\t{}\tfixed\n".format(
-                                    contig_name,
-                                    (start - temp_dif_pos - 12),
-                                    (end +1 - temp_dif_pos + alignments[0][4])),
+                                tuple(
+                                    [
+                                        j + 1,
+                                        N_pos.get(contig_name)[j][2] + alignments[0][4],
+                                    ]
                                 )
-                            temp_dif_pos += number + alignments[0][4]
+                            )
+                            if fixed != "":
+                                fixed.write(
+                                    "{}\t{}\t{}\tfixed\n".format(
+                                        contig_name,
+                                        (start - temp_dif_pos - 12 - 1),
+                                        (end + 1 - temp_dif_pos + alignments[0][4]),
+                                    ),
+                                )
+
                             if not error_df.empty:
                                 idx = list()
-                                idx = error_df.loc[(error_df['contig'] == contig_name) & (error_df['status'] != "fixed") & ((end +1 + alignments[0][4]) > (error_df['N_build_start'] + 1)) & ((end +1 + alignments[0][4]) < (error_df['N_build_end'] + 2 * av_readlen))].index.tolist()
-                               # temp_dif_pos += number + alignments[0][4]
-                                if idx:
-                                    error_df.at[idx[0],'status'] = 'fixed'
-                                    error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                    error_df.loc[(error_df['contig'] == contig_name) & (error_df['order'] > idx[0]), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                                   # print(idx, 'IDX', error_df.at[idx[0],'order'], 'ORDER')
-                                else:
-                                    error_df.loc[(error_df['contig'] == contig_name), 'N_build_start'] = error_df['N_build_start'] - temp_dif_pos
-                                    error_df.loc[(error_df['contig'] == contig_name), 'N_build_end'] = error_df['N_build_end'] - temp_dif_pos
-                            #else:
-                            #    temp_dif_pos += number + alignments[0][4]
+                                idx = error_df.loc[
+                                    (error_df["contig"] == contig_name)
+                                    & (error_df["status"] != "fixed")
+                                    & (
+                                        (end + 1 - temp_dif_pos)
+                                        > (error_df["N_build_start"] + 1)
+                                    )
+                                    & (
+                                        (end + 1 - temp_dif_pos)
+                                        < (error_df["N_build_end"] + 2 * av_readlen)
+                                    )
+                                ].index.tolist()
 
+                                if idx:
+                                    error_df.at[idx[0], "status"] = "fixed"
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["order"]
+                                            > error_df.at[idx[0], "order"]
+                                        ),
+                                        "N_build_start",
+                                    ] = error_df["N_build_start"] - (
+                                        number + alignments[0][4]
+                                    )  # temp_dif_pos
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (
+                                            error_df["order"]
+                                            > error_df.at[idx[0], "order"]
+                                        ),
+                                        "N_build_end",
+                                    ] = error_df["N_build_end"] - (
+                                        number + alignments[0][4]
+                                    )  # temp_dif_pos
+                                else:
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (error_df["N_build_start"] > (start - 13)),
+                                        "N_build_start",
+                                    ] = error_df["N_build_start"] - (
+                                        number + alignments[0][4]
+                                    )  # temp_dif_pos | (start - temp_dif_pos - 12)
+                                    error_df.loc[
+                                        (error_df["contig"] == contig_name)
+                                        & (error_df["N_build_start"] > (start - 13)),
+                                        "N_build_end",
+                                    ] = error_df["N_build_end"] - (
+                                        number + alignments[0][4]
+                                    )  # - temp_dif_pos
+
+                            else:
+                                temp_dif_pos += number + alignments[0][4]
 
         ### Creating new target based on control and N_target ######
         if control_index:
             for index, number in control_index:
                 for i in range(0, index):
-                   new_target.append(list([N_target.get(contig_name)[i][0], N_target.get(contig_name)[i][1]]))
+                    new_target.append(
+                        list(
+                            [
+                                N_target.get(contig_name)[i][0],
+                                N_target.get(contig_name)[i][1],
+                            ]
+                        )
+                    )
                 for i in range(index, len(N_target.get(contig_name))):
                     new_target.append(
                         list(
-                            [N_target.get(contig_name)[i][0] - number, N_target.get(contig_name)[i][1] - number]
+                            [
+                                N_target.get(contig_name)[i][0] - number,
+                                N_target.get(contig_name)[i][1] - number,
+                            ]
                         )
                     )
         else:
@@ -770,12 +1002,12 @@ def check_overlap(output_dir, fasta, av_readlen, thread, user_file=False, error_
 
     new_fasta_temp.close()
     if not user_file:
-       file_target.close()
+        file_target.close()
     if fixed != "":
         return fixed
 
 
-def check_npos(av_readlen,one_fasta, error=False):
+def check_npos(av_readlen, one_fasta, error=False):
     """Check Npos from contigs"""
     ### Personal remember - genome pos (1..N), list pos (0..N)
     ###taking all N index
@@ -841,13 +1073,12 @@ def check_npos(av_readlen,one_fasta, error=False):
                 list([final_list[i] + 1, final_list[i + 1] + 1])
             )  ### return the position for calculate new target
 
-        dict_npos = {one_fasta.id:N_pos}
-        dict_ntarget = {one_fasta.id:N_target}
+        dict_npos = {one_fasta.id: N_pos}
+        dict_ntarget = {one_fasta.id: N_target}
 
         return dict_npos, dict_ntarget
     else:
         return list(), list()
-        
 
 
 def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
@@ -887,7 +1118,12 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     )
 
 
-def build_N(output_dir, fasta, av_readlen, organized_errors,):
+def build_N(
+    output_dir,
+    fasta,
+    av_readlen,
+    organized_errors,
+):
     """Replace error for N and extend the contig's edges for N - pre-curation step"""
 
     if os.path.exists(
@@ -964,33 +1200,40 @@ def build_N(output_dir, fasta, av_readlen, organized_errors,):
 
     fasta_N.close()
     target.close()
-    
+
     L = [(k, *t) for k, v in dict_only_errors.items() for t in v]
-    error_df = pd.DataFrame(L, columns=['contig','start','end',])
-    error_df['order'] = error_df.groupby('contig').cumcount() + 1
-    error_df['len'] = error_df['contig'].map(dict_len)
-    error_df['type_of_error'] = 'local_assembly_error'
-    error_df.loc[ (error_df['start'] == 1) | (error_df['end'] == error_df['len']), 'type_of_error'] = 'edge_reads_cov'
-    error_df['N_build_start'] = error_df['start']+(ext_size * error_df['order'])
-    error_df['N_build_end'] = error_df['end']+(ext_size * error_df['order'])+ ext_size
-    error_df['status'] = ""
+    error_df = pd.DataFrame(
+        L,
+        columns=[
+            "contig",
+            "start",
+            "end",
+        ],
+    )
+    error_df["order"] = error_df.groupby("contig").cumcount() + 1
+    error_df["len"] = error_df["contig"].map(dict_len)
+    error_df["type_of_error"] = "local_assembly_error"
+    error_df.loc[
+        (error_df["start"] == 1) | (error_df["end"] == error_df["len"]), "type_of_error"
+    ] = "edge_reads_cov"
+    error_df["N_build_start"] = error_df["start"] + (ext_size * error_df["order"])
+    error_df["N_build_end"] = (
+        error_df["end"] + (ext_size * error_df["order"]) + ext_size
+    )
+    error_df["status"] = ""
     logger.warning(
-        "\n\nFixame could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors - {}\n * Edge reads coverage - {}\n".format(len(error_df), len(error_df['contig'].unique()),len(error_df[error_df['type_of_error'] == 'local_assembly_error']), len(error_df[error_df['type_of_error'] == 'edge_reads_cov'])
+        "\n\nFixame could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors - {}\n * Edge reads coverage - {}\n".format(
+            len(error_df),
+            len(error_df["contig"].unique()),
+            len(error_df[error_df["type_of_error"] == "local_assembly_error"]),
+            len(error_df[error_df["type_of_error"] == "edge_reads_cov"]),
         )
     )
 
     return dict_len, error_df
 
 
-def var_cal_fix(
-    output_dir,
-    count,
-    fixed,
-    thread,
-    dp_cov,
-    av_readlen,
-    error_df
-):
+def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
     """Find changes on Ns position and replace them"""
 
     aligner(
@@ -1067,17 +1310,21 @@ def var_cal_fix(
                     ]
 
     new_fasta_temp = open(os.path.join(output_dir, "tmp", "snp_fasta.fasta"), "w")
-    for seq_record in SeqIO.parse(os.path.join(output_dir,'tmp','v_'+str(count-1)+'.fasta'),'fasta'):
-        pos_temp=0
+    for seq_record in SeqIO.parse(
+        os.path.join(output_dir, "tmp", "v_" + str(count - 1) + ".fasta"), "fasta"
+    ):
+        pos_temp = 0
         if seq_record.id in var_list.keys():
             seq_mutable = seq_record.seq.tomutable()
             for value in var_list[seq_record.id]:
-                pos,len_ref,len_var,var = value
-                seq_mutable[pos+pos_temp:pos+pos_temp+len_ref] = var
-                pos_temp+=(len_var-len_ref)
-            new_fasta_temp.write(">{}\n{}\n".format(seq_record.id,seq_mutable))
+                pos, len_ref, len_var, var = value
+                seq_mutable[pos + pos_temp : pos + pos_temp + len_ref] = var
+                pos_temp += len_var - len_ref
+            new_fasta_temp.write(">{}\n{}\n".format(seq_record.id, seq_mutable))
         else:
-            new_fasta_temp.write(">{}\n{}\n".format(seq_record.id,seq_record.seq)) ##removi seq_mutable e substitui por seq_record.seq
+            new_fasta_temp.write(
+                ">{}\n{}\n".format(seq_record.id, seq_record.seq)
+            )  ##removi seq_mutable e substitui por seq_record.seq
 
     new_fasta_temp.close()
 
@@ -1086,7 +1333,7 @@ def var_cal_fix(
         os.path.join(output_dir, "tmp", "snp_fasta.fasta"),
         av_readlen,
         thread,
-        error_df = error_df,
+        error_df=error_df,
         fixed=fixed,
         count=count,
     )
@@ -1134,10 +1381,10 @@ def remove_N(
                 seq_record.id, seq_mutable, actual_start, actual_end, av_readlen
             )
             unordered_fasta.write(str(fasta_wo_N))
-    
+
     with ProcessPoolExecutor(thread) as executor:
-        check_npos_result  = executor.map(partial(check_npos, av_readlen), to_be_checked)
-    
+        check_npos_result = executor.map(partial(check_npos, av_readlen), to_be_checked)
+
     npos_list = list()
 
     for npos_unit in check_npos_result:
@@ -1145,12 +1392,12 @@ def remove_N(
 
     N_pos = {}
 
-    for i in (npos_list):
+    for i in npos_list:
         N_pos.update(i)
-    
+
     for checked in to_be_checked:
         actual_start, actual_end = 0, 0
-        contig = checked.id 
+        contig = checked.id
         seq_mutable = checked.seq.tomutable()
         check_edges = N_pos[contig][1:-1]
         if check_edges:
@@ -1162,7 +1409,7 @@ def remove_N(
                 av_readlen,
                 mean_gap,
                 mean_gap_std,
-                check_edges ,
+                check_edges,
             )
 
         # Edges
@@ -1180,9 +1427,17 @@ def remove_N(
         )
         unordered_fasta.write(str(fasta_wo_N))
     unordered_fasta.close()
-    records = list(SeqIO.parse(os.path.join(output_dir, "tmp", name_fasta + "_unordered.fasta"), "fasta"))
+    records = list(
+        SeqIO.parse(
+            os.path.join(output_dir, "tmp", name_fasta + "_unordered.fasta"), "fasta"
+        )
+    )
     records.sort(key=lambda r: -len(r))
-    SeqIO.write(records, os.path.join(output_dir, "fixame_results", name_fasta + "_fixame.fasta"), "fasta")
+    SeqIO.write(
+        records,
+        os.path.join(output_dir, "fixame_results", name_fasta + "_fixame.fasta"),
+        "fasta",
+    )
 
 
 def check_reads_N_edges(

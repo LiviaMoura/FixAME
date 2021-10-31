@@ -104,6 +104,7 @@ def check_direct_features(id_sequence):
 
     return direct_feature_dict
 
+
 def check_direct_features_parallel(fasta, threads):
     "Run direct_features in parallel"
 
@@ -320,7 +321,7 @@ def check_local_assembly_errors(reference):
 
 def check_local_assembly_errors_parallel(
     references, threads, rrl, rtl, fc, bd, nm, tlm
-): 
+):
     "Run find_regions in parallel"
     global reference_read_lengths, reference_to_length, fasta_cov, bam_dict, num_mm, template_length_max
     (

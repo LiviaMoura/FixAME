@@ -40,8 +40,10 @@ def aligner(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
-            if 'Duplicated sequence' in str(result.stderr):
-                logger.error('There are duplicate fastas names in your fasta/bins, please fix it before running Fixame')
+            if "Duplicated sequence" in str(result.stderr):
+                logger.error(
+                    "There are duplicate fastas names in your fasta/bins, please fix it before running Fixame"
+                )
                 sys.exit()
 
         else:
@@ -60,8 +62,10 @@ def aligner(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
-            if 'Duplicated sequence' in str(result.stderr):
-                logger.error('There are duplicate fastas names in your fasta/bins, please fix it before running Fixame')
+            if "Duplicated sequence" in str(result.stderr):
+                logger.error(
+                    "There are duplicate fastas names in your fasta/bins, please fix it before running Fixame"
+                )
                 sys.exit()
     else:
         result = subprocess.run(
@@ -81,8 +85,10 @@ def aligner(
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
-        if 'Duplicated sequence' in str(result.stderr):
-            logger.error('There are duplicate fastas names in your fasta/bins, \nplease fix it before running Fixame')
+        if "Duplicated sequence" in str(result.stderr):
+            logger.error(
+                "There are duplicate fastas names in your fasta/bins, \nplease fix it before running Fixame"
+            )
             sys.exit()
 
     subprocess.run(
