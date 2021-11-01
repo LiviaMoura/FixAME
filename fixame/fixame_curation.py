@@ -477,7 +477,6 @@ def main(**kwargs):
         final_output(mydir, error_df, features_list_dict)
 
         for index, (sample_name, fasta_id) in df.iterrows():
-            print(sample_name, fasta_id)
             fasta_ids = "\n".join(fasta_id)
             tmp_id = open(os.path.join(mydir, "tmp", "tmp_fasta"), "w")
             tmp_id.write(fasta_ids)
@@ -1444,7 +1443,6 @@ def check_reads_N_edges(
         os.path.join(output_dir, "fixing_log", "fixame_without_read_support.txt"), "a"
     )
     for start, end, space in N_pos:
-        # print(start,'START', end,'END', space,'SPACE')
         check_valid = ""
 
         if (start - mean_gap) < 1:
@@ -1518,7 +1516,7 @@ def check_reads_N_edges(
                 (end_mgap + 1 + count),
                 left_right,
             )
-            # print(cmd)
+
             distance = int(
                 subprocess.check_output(
                     cmd, universal_newlines=True, shell=True
@@ -1560,7 +1558,6 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
     new_fasta = ""
     ext_size = av_readlen * 3
     for number in range(len_seq - (ext_size) - actual_end, len_seq):
-        # print(fasta_header, len_seq, number)
         if seq_mutable[number] == "N":
             remov_end = number
             break
