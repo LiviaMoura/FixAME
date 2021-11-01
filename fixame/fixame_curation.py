@@ -89,7 +89,15 @@ def main(**kwargs):
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
             )
-            check_overlap(mydir, fasta_in, av_readlen, kwargs.get("threads"), True)
+            os.mkdir(os.path.join(mydir, "fixing_log"))
+
+            closed_N = open(
+                os.path.join(mydir, "fixing_log", "fixame_initial_Ns_closed.txt"),
+                "w+",
+            )
+            check_overlap(
+                mydir, fasta_in, av_readlen, kwargs.get("threads"), True, fixed=closed_N
+            )
             logger.info(
                 "A new reference fasta {} was created".format(
                     mydir + "/new_fastas/" + name_fasta + "_renewed.fasta"
@@ -204,7 +212,6 @@ def main(**kwargs):
             raise e
 
         logger.info("\nStarting to fix sample {}\n".format(name_fasta))
-        os.mkdir(os.path.join(mydir, "fixing_log"))
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
@@ -249,27 +256,8 @@ def main(**kwargs):
         )
 
         error_df["sample_name"] = name_fasta
-        error_df.to_csv(
-            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"),
-            columns=[
-                "contig",
-                "start",
-                "end",
-                "type_of_error",
-                "status",
-                "sample_name",
-            ],
-            index=None,
-            sep="\t",
-        )
 
-        # extra_features = open(os.path.join(mydir, 'Fixame_features.txt'), "w+")
-        # if features_list_dict:
-        #     extra_features.write('contig\tfeature\tcount')
-        #     for ctg_name,v in features_list_dict.items():
-        #         for feature, v_two in v.items():
-        #             extra_features.write(f'{ctg}\t{feature}\t{v_two}')
-        # extra_features.close()
+        final_output(mydir, error_df, features_list_dict)
 
         if kwargs.get("keep") is False:
             try:
@@ -316,7 +304,14 @@ def main(**kwargs):
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
             )
-            check_overlap(mydir, fasta_in, av_readlen, kwargs.get("threads"), True)
+            os.mkdir(os.path.join(mydir, "fixing_log"))
+            closed_N = open(
+                os.path.join(mydir, "fixing_log", "fixame_initial_Ns_closed.txt"),
+                "w+",
+            )
+            check_overlap(
+                mydir, fasta_in, av_readlen, kwargs.get("threads"), True, fixed=closed_N
+            )
             logger.info(
                 "A new reference fasta {} was created".format(
                     mydir + "/new_fastas/" + name_sample + "_renewed.fasta"
@@ -429,7 +424,6 @@ def main(**kwargs):
             raise e
 
         logger.info("Starting to fix all bins\n")
-        os.mkdir(os.path.join(mydir, "fixing_log"))
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
@@ -479,30 +473,9 @@ def main(**kwargs):
             names=["sample_name", "contig"],
         )
         error_df = pd.merge(error_df, df, on=["contig"], how="left")
-        df = (
-            df.groupby("sample_name").agg({"contig": lambda x: list(x)}).reset_index()
-        )  ######OPAAAA
-        error_df.to_csv(
-            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"),
-            columns=[
-                "contig",
-                "start",
-                "end",
-                "type_of_error",
-                "status",
-                "sample_name",
-            ],
-            index=None,
-            sep="\t",
-        )
+        df = df.groupby("sample_name").agg({"contig": lambda x: list(x)}).reset_index()
 
-        # extra_features = open(os.path.join(mydir, 'Fixame_features.txt'), "w+")
-        # if features_list_dict:
-        #     extra_features.write('contig\tfeature\tcount')
-        #     for ctg_name,v in features_list_dict.items():
-        #         for feature, v_two in v.items():
-        #             extra_features.write(f'{ctg}\t{feature}\t{v_two}')
-        # extra_features.close()
+        final_output(mydir, error_df, features_list_dict)
 
         for index, (sample_name, fasta_id) in df.iterrows():
             print(sample_name, fasta_id)
@@ -702,12 +675,16 @@ def check_overlap(
                                     (error_df["contig"] == contig_name)
                                     & (error_df["N_build_start"] > (start - variat)),
                                     "N_build_start",
-                                ] = (error_df["N_build_start"] - temp_dif_pos)
+                                ] = (
+                                    error_df["N_build_start"] - temp_dif_pos
+                                )
                                 error_df.loc[
                                     (error_df["contig"] == contig_name)
                                     & (error_df["N_build_start"] > (start - variat)),
                                     "N_build_end",
-                                ] = (error_df["N_build_end"] - temp_dif_pos)
+                                ] = (
+                                    error_df["N_build_end"] - temp_dif_pos
+                                )
                         else:
                             temp_dif_pos += number + variat
 
@@ -764,7 +741,9 @@ def check_overlap(
                                             > error_df.at[idx[0], "order"]
                                         ),
                                         "N_build_start",
-                                    ] = (error_df["N_build_start"] - temp_dif_pos)
+                                    ] = (
+                                        error_df["N_build_start"] - temp_dif_pos
+                                    )
                                     error_df.loc[
                                         (error_df["contig"] == contig_name)
                                         & (
@@ -772,7 +751,9 @@ def check_overlap(
                                             > error_df.at[idx[0], "order"]
                                         ),
                                         "N_build_end",
-                                    ] = (error_df["N_build_end"] - temp_dif_pos)
+                                    ] = (
+                                        error_df["N_build_end"] - temp_dif_pos
+                                    )
                                 else:
                                     error_df.loc[
                                         (error_df["contig"] == contig_name)
@@ -780,14 +761,18 @@ def check_overlap(
                                             error_df["N_build_start"] > (start - 12 - 1)
                                         ),
                                         "N_build_start",
-                                    ] = (error_df["N_build_start"] - temp_dif_pos)
+                                    ] = (
+                                        error_df["N_build_start"] - temp_dif_pos
+                                    )
                                     error_df.loc[
                                         (error_df["contig"] == contig_name)
                                         & (
                                             error_df["N_build_start"] > (start - 12 - 1)
                                         ),
                                         "N_build_end",
-                                    ] = (error_df["N_build_end"] - temp_dif_pos)
+                                    ] = (
+                                        error_df["N_build_end"] - temp_dif_pos
+                                    )
 
                             else:
                                 temp_dif_pos += number + alignments[0][4]
@@ -1591,3 +1576,34 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
     new_fasta += ">" + fasta_header + "\n" + seq_mutable[remov_start:remov_end] + "\n"
 
     return new_fasta
+
+
+def final_output(output, df, features):
+    df.to_csv(
+        os.path.join(output, "Fixame_AssemblyErrors_report.txt"),
+        columns=[
+            "contig",
+            "start",
+            "end",
+            "type_of_error",
+            "status",
+            "sample_name",
+        ],
+        index=None,
+        sep="\t",
+    )
+
+    # grouped = df.groupby(['sample_name', 'contig', 'type_of_error', 'status'])[['type_of_error']].agg('count')
+    # g_unstack = grouped.unstack(['status','type_of_error']).reset_index()
+    # g_unstack.columns = ['sample_name','contig','Edges_events', 'Local_error_events', 'Fixed_local_error']
+    # g_unstack[['Edges_events','Local_error_events','Fixed_local_error']] = g_unstack[['Edges_events','Local_error_events','Fixed_local_error']].fillna(0).astype(int)
+    # g_unstack.to_csv(os.path.join(output, "Fixame_Summary.txt"), index=None, sep='\t')
+
+    extra_features = open(os.path.join(output, "Fixame_features.txt"), "w+")
+    if features:
+        extra_features.write("contig\tfeature\tcount\n")
+        for item in features:
+            for ctg_name, v in item.items():
+                for feature, v_two in v.items():
+                    extra_features.write(f"{ctg_name}\t{feature}\t{v_two}\n")
+    extra_features.close()
