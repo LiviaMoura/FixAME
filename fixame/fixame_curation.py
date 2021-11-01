@@ -12,7 +12,6 @@ from Bio import pairwise2
 
 from fixame.fixame_aligner import aligner
 from fixame.fixame_common import common_validate
-from fixame.fixame_multiprocessing import RunJob
 from fixame.fixame_logging import logger
 from fixame.fixame_error_finder import (
     calculate_reference_lengths,
