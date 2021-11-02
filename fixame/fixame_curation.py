@@ -908,7 +908,7 @@ def check_overlap(
                                         < (error_df["N_build_end"] + 2 * av_readlen)
                                     )
                                 ].index.tolist()
-
+                                temp_dif_pos += number + alignments[0][4]
                                 if idx:
                                     error_df.at[idx[0], "status"] = "fixed"
                                     error_df.loc[
