@@ -972,9 +972,11 @@ def check_overlap(
                         )
                     )
         else:
-            new_target = N_target.get(contig_name)
+            if (N_target.get(contig_name)):
+                new_target = N_target.get(contig_name)
 
         if not user_file:
+            
             with open(os.path.join(output_dir, "tmp", "target"), "a") as file_target:
                 for start, end in new_target:
                     file_target.write(
@@ -1382,32 +1384,36 @@ def remove_N(
         actual_start, actual_end = 0, 0
         contig = checked.id
         seq_mutable = checked.seq.tomutable()
-        check_edges = N_pos[contig][1:-1]
-        if check_edges:
-            seq_mutable = check_reads_N_edges(
-                output_dir,
-                contig,
-                seq_mutable,
-                contig,
-                av_readlen,
-                mean_gap,
-                mean_gap_std,
-                check_edges,
-            )
+        
+        if N_pos.get(contig):
+            check_edges = N_pos[contig][1:-1]
+            if check_edges:
+                seq_mutable = check_reads_N_edges(
+                    output_dir,
+                    contig,
+                    seq_mutable,
+                    contig,
+                    av_readlen,
+                    mean_gap,
+                    mean_gap_std,
+                    check_edges,
+                )
 
-        # Edges
-        if organized_errors[contig][0][0] == 1:
-            actual_start = organized_errors[contig][0][1] + ext_size
-        if organized_errors[contig][-1][1] == fasta_len[contig]:
-            actual_end = (
-                organized_errors[contig][-1][1]
-                - organized_errors[contig][-1][0]
-                + 1
-                + ext_size
+            # Edges
+            if organized_errors[contig][0][0] == 1:
+                actual_start = organized_errors[contig][0][1] + ext_size
+            if organized_errors[contig][-1][1] == fasta_len[contig]:
+                actual_end = (
+                    organized_errors[contig][-1][1]
+                    - organized_errors[contig][-1][0]
+                    + 1
+                    + ext_size
+                )
+            fasta_wo_N = remove_N_slave(
+                contig, seq_mutable, actual_start, actual_end, av_readlen
             )
-        fasta_wo_N = remove_N_slave(
-            contig, seq_mutable, actual_start, actual_end, av_readlen
-        )
+        else: 
+            fasta_wo_N = ">" + contig + "\n" + seq_mutable + "\n"
         unordered_fasta.write(str(fasta_wo_N))
     unordered_fasta.close()
     records = list(
