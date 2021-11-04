@@ -500,6 +500,7 @@ def main(**kwargs):
             )
 
         os.remove(os.path.join(mydir, "tmp", "bins_unordered.fasta"))
+        os.remove(os.path.join(mydir, "tmp", "bins_fixame.fasta"))
         os.remove(os.path.join(mydir, "new_fastas", "bins_renewed.fasta"))
         os.remove(os.path.join(mydir, "tmp", "tmp_fasta"))
 
@@ -543,10 +544,9 @@ def check_overlap(
         if os.path.exists(
             os.path.join(output_dir, "tmp", "target")
         ):  ### remove target file if it exists
-            # copied = open(os.path.join(output_dir, "tmp", "target_"+str(count)), "w+")
             shutil.copyfile(
                 os.path.join(output_dir, "tmp", "target"),
-                os.path.join(output_dir, "tmp", "target_" + str(count)),
+                #os.path.join(output_dir, "tmp", "target_" + str(count)),
             )
             # copied.close()
             os.remove(os.path.join(output_dir, "tmp", "target"))
@@ -603,6 +603,16 @@ def check_overlap(
                     if idx:
                         error_df.at[idx[0], "N_build_start"] = start
                         error_df.at[idx[0], "N_build_end"] = end
+                    else:
+                        if count == 1:
+                            error_df.loc[
+                                (error_df["contig"] == contig_name)
+                                & (start < error_df["N_build_start"])
+                                & (end < error_df["N_build_end"]), "N_build_start"] = error_df["N_build_start"] + 3*av_readlen
+                            error_df.loc[
+                                (error_df["contig"] == contig_name)
+                                & (start < error_df["N_build_start"])
+                                & (end < error_df["N_build_end"]), "N_build_end"] = error_df["N_build_end"] + 3*av_readlen
 
             for j, (start, end, number) in enumerate(N_pos.get(contig_name)):
 
@@ -657,7 +667,7 @@ def check_overlap(
                                     "N_build_start",
                                 ] = (
                                     error_df["N_build_start"] - temp_dif_pos
-                                )  # + (start - error_df['N_build_start'])
+                                )  
                                 error_df.loc[
                                     (error_df["contig"] == contig_name)
                                     & (
@@ -666,7 +676,7 @@ def check_overlap(
                                     "N_build_end",
                                 ] = (
                                     error_df["N_build_end"] - temp_dif_pos
-                                )  # - (error_df['N_build_end'] - end)
+                                )  
 
                             else:
                                 error_df.loc[
