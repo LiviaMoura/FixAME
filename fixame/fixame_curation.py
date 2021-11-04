@@ -544,11 +544,6 @@ def check_overlap(
         if os.path.exists(
             os.path.join(output_dir, "tmp", "target")
         ):  ### remove target file if it exists
-            shutil.copyfile(
-                os.path.join(output_dir, "tmp", "target"),
-                #os.path.join(output_dir, "tmp", "target_" + str(count)),
-            )
-            # copied.close()
             os.remove(os.path.join(output_dir, "tmp", "target"))
 
         new_fasta_temp = open(
