@@ -500,7 +500,7 @@ def main(**kwargs):
             )
 
         os.remove(os.path.join(mydir, "tmp", "bins_unordered.fasta"))
-        os.remove(os.path.join(mydir, "tmp", "bins_fixame.fasta"))
+        os.remove(os.path.join(mydir, "fixame_results", "bins_fixame.fasta"))
         os.remove(os.path.join(mydir, "new_fastas", "bins_renewed.fasta"))
         os.remove(os.path.join(mydir, "tmp", "tmp_fasta"))
 
