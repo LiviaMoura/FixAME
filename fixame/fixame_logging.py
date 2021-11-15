@@ -1,5 +1,5 @@
 import logging
-import os, errno, sys
+import os, errno, sys, shutil
 
 
 logger = logging.getLogger()
@@ -7,10 +7,12 @@ FixAME_LOGGING_FORMAT = "[%(levelname)s] - %(asctime)s %(message)s"
 FixAME_LOG_LEVEL = logging.INFO
 
 
-def create_fixame_logging_folders(output_dir, create_folders=[]):
+def create_fixame_logging_folders(output_dir, force, create_folders=[]):
     try:
         full_path = os.path.join(output_dir)
         logger.info(f"FixAME output folder - {output_dir}")
+        if force:
+            shutil.rmtree(full_path)
         os.makedirs(os.path.join(full_path))
 
         for folder in create_folders:
