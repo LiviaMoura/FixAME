@@ -42,7 +42,7 @@ def aligner(
             )
             if "Duplicated sequence" in str(result.stderr):
                 logger.error(
-                    "There are duplicate fastas names in your fasta/bins, please fix it before running Fixame"
+                    "There are duplicate fastas names in your fasta/bins, please fix it before running FixAME"
                 )
                 sys.exit()
 
@@ -64,7 +64,7 @@ def aligner(
             )
             if "Duplicated sequence" in str(result.stderr):
                 logger.error(
-                    "There are duplicate fastas names in your fasta/bins, please fix it before running Fixame"
+                    "There are duplicate fastas names in your fasta/bins, please fix it before running FixAME"
                 )
                 sys.exit()
     else:
@@ -87,7 +87,7 @@ def aligner(
         )
         if "Duplicated sequence" in str(result.stderr):
             logger.error(
-                "There are duplicate fastas names in your fasta/bins, \nplease fix it before running Fixame"
+                "There are duplicate fastas names in your fasta/bins, \nplease fix it before running FixAME"
             )
             sys.exit()
 

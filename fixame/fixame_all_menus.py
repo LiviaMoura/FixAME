@@ -21,7 +21,7 @@ class CustomHelpFormatter(argparse.HelpFormatter):
 fmt = lambda prog: CustomHelpFormatter(prog)
 
 
-VERSION = "0.9.0"
+VERSION = "0.9.9"
 
 
 def printHelp():
@@ -38,10 +38,8 @@ def printHelp():
 
 \u001b[32m Single process \u001b[0m
   error_finder     Return the positional of assembly errors
-  merge            Locate overlaps between contigs edges and connect them
-  find_circular    [Yet to be implemented here]
   
-Ex.: fixame [curation|error_finder|merge|find_circular] --help
+Ex.: FixAME [curation|error_finder] --help
 
 """
     )
@@ -204,8 +202,8 @@ def parse_args(args):
         add_help=False,
         epilog=textwrap.dedent(
             """\
-            Usage: fixame curation -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
-                   fixame curation -b {bin_folder} -r12 {R12.fastq} -o {path}
+            Usage: FixAME curation -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
+                   FixAME curation -b {bin_folder} -r12 {R12.fastq} -o {path}
                    
                    """
         ),
@@ -228,8 +226,8 @@ def parse_args(args):
         add_help=False,
         epilog=textwrap.dedent(
             """\
-            Usage: fixame error_finder -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
-                   fixame error_finder -b {bin_folder} -r12 {R12.fastq} -o {path}
+            Usage: FixAME error_finder -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
+                   FixAME error_finder -b {bin_folder} -r12 {R12.fastq} -o {path}
    
                    """
         ),
@@ -252,8 +250,8 @@ def parse_args(args):
         add_help=False,
         epilog=textwrap.dedent(
             """\
-            Usage: fixame merge -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
-                   fixame merge -b {bin_folder} -r12 {R12.fastq} -o {path} 
+            Usage: FixAME merge -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
+                   FixAME merge -b {bin_folder} -r12 {R12.fastq} -o {path} 
    
                    """
         ),

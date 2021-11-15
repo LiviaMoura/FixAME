@@ -31,7 +31,7 @@ if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
     full_path = create_fixame_logging_folders(
-        args.output_dir, create_folders=["tmp", "new_fastas"]
+        args.output_dir, create_folders=["tmp", "new_fastas", "FixAME_log", "FixAME_table", "FixAME_result"]
     )
     logger = fixame_logging(logger, full_path)
     args.full_path = full_path

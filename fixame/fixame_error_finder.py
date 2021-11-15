@@ -480,6 +480,20 @@ def main(**kwargs):
             logger.error("Something went wrong")
             sys.exit()
 
+        features_list_dict = check_direct_features_parallel(
+            fasta_in,
+            kwargs.get("threads"),
+        )
+
+        extra_features = open(os.path.join(mydir,"FixAME_table", "FixAME_features_report.tsv"), "w+")
+        if features_list_dict:
+            extra_features.write("contig\tfeature\tcount\n")
+            for item in features_list_dict:
+                for ctg_name, v in item.items():
+                    for feature, v_two in v.items():
+                        extra_features.write(f"{ctg_name}\t{feature}\t{v_two}\n")
+        extra_features.close()
+
         try:
             logger.info("Trying to find regions with local assembly errors")
             (
@@ -506,7 +520,7 @@ def main(**kwargs):
         )
 
         with open(
-            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"), "w+"
+            os.path.join(mydir, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"), "w+"
         ) as error_loc:
             error_loc.write(
                 "contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n"
@@ -526,28 +540,20 @@ def main(**kwargs):
                     )
             error_loc.close()
         logger.warning(
-            "\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(
+            "\n\nFixAME could detect a total of {} errors in {} contig(s)\n".format(
                 counter_err, counter_contigs
             )
         )
         logger.info(
             "The file containing the detected errors {} was created".format(
-                output_dir + "/Fixame_Errors_report.txt"
+                output_dir + "/FixAME_table/FixAME_AssemblyErrors_report.tsv"
             )
         )
-        if kwargs.get("keep") is False:
-            try:
-                logger.info("Removing temporary files")
-                shutil.rmtree(os.path.join(mydir, "tmp"))
-            except:
-                logger.info("It wasn't possible to remove the /tmp folder")
-        shutil.rmtree(os.path.join(mydir, "new_fastas"))
-        logger.info("\n\nFixame error_finder proccess done!\n")
 
     else:  # BINS MODE
         fasta_array = []
         name_sample = "bins"
-        contigs_bins = open(os.path.join(mydir, "bin_contigs.txt"), "w+")
+        contigs_bins = open(os.path.join(mydir, "bin_contigs.tsv"), "w+")
         merged = open(os.path.join(mydir, "tmp", "bins.fasta"), "w+")
         for sample in os.listdir(
             os.path.realpath(os.path.expanduser(kwargs.get("bins")))
@@ -622,6 +628,7 @@ def main(**kwargs):
             logger.error("Something went wrong")
             sys.exit()
 
+
         try:
             logger.info("Trying to find regions with local assembly errors")
             (
@@ -648,7 +655,7 @@ def main(**kwargs):
         )
 
         with open(
-            os.path.join(mydir, "Fixame_AssemblyErrors_report.txt"), "w+"
+            os.path.join(mydir,"FixAME_table","FixAME_AssemblyErrors_report.tsv"), "w+"
         ) as error_loc:
             error_loc.write(
                 "contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n"
@@ -668,22 +675,22 @@ def main(**kwargs):
                     )
             error_loc.close()
         logger.warning(
-            "\n\nFixame could detect a total of {} errors in {} contig(s)\n".format(
+            "\n\nFixAME could detect a total of {} errors in {} contig(s)\n".format(
                 counter_err, counter_contigs
             )
         )
         logger.info(
             "The file containing the detected errors {} was created".format(
-                output_dir + "/Fixame_Errors_report.txt"
+                output_dir + "/FixAME_table/FixAME_AssemblyErrors_report.tsv"
             )
         )
 
-        if kwargs.get("keep") == False:
-            try:
-                logger.info("Removing temporary files")
-                shutil.rmtree(os.path.join(mydir, "tmp"))
-            except:
-                logger.info("It wasn't possible to remove the /tmp folder")
-        shutil.rmtree(os.path.join(mydir, "new_fastas"))
-
-        logger.info("\n\nFixame error_finder proccess done!\n")
+    if kwargs.get("keep") is False:
+        try:
+            logger.info("Removing temporary files")
+            shutil.rmtree(os.path.join(mydir, "tmp"))
+        except:
+            logger.info("It wasn't possible to remove the /tmp folder")
+    shutil.rmtree(os.path.join(mydir, "new_fastas"))
+    shutil.rmtree(os.path.join(mydir, "FixAME_result"))
+    logger.info("\n\nFixAME error_finder proccess done!\n")

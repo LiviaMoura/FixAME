@@ -35,7 +35,7 @@ __status__ = "Development"
 
 def main(**kwargs):
     """
-    *Fixame curation args:
+    *FixAME curation args:
     xtimes:         Number of alignments during the curation [10]
     minid:          Minumum identity for the first alignment [0.9]
     fasta_cov:      Local errors will be called on regions with coverage >= [5]
@@ -45,7 +45,7 @@ def main(**kwargs):
 
     *common args*
     fasta:          fasta file for genome|metagenome [.fasta|.fa|.fna]
-    output_dir:     output directory where it'll created a fixame_[date] folder
+    output_dir:     output directory where it'll created a FixAME_[date] folder
     bins:           folder cointaining bins [.fasta|.fa|.fna]
     r12:            Interlaced SYNCED forward and reverse paired-end reads
     r1:             Forward paired-end reads
@@ -88,10 +88,10 @@ def main(**kwargs):
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
             )
-            os.mkdir(os.path.join(mydir, "fixing_log"))
+            os.mkdir(os.path.join(mydir, "FixAME_log", "fixed"))
 
             closed_N = open(
-                os.path.join(mydir, "fixing_log", "fixame_initial_Ns_closed.txt"),
+                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"),
                 "w+",
             )
             check_overlap(
@@ -214,7 +214,7 @@ def main(**kwargs):
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
-                os.path.join(mydir, "fixing_log", "fixame_loop_" + str(count) + ".txt"),
+                os.path.join(mydir, "FixAME_log","fixed", "FixAME_loop_" + str(count) + ".tsv"),
                 "w+",
             )
             try:
@@ -236,11 +236,11 @@ def main(**kwargs):
 
         logger.info("Errors fixing complete")
         logger.info(
-            "You can find the fixing log at {}".format(
-                os.path.join(mydir, "fixing_log")
+            "You can find the errors fixed log at {}".format(
+                os.path.join(mydir, "FixAME_log", "fixed")
             )
         )
-        os.mkdir(os.path.join(mydir, "fixame_results"))
+        #os.mkdir(os.path.join(mydir, "FixAME_result"))
         logger.info("Polishing the sequences...")
         remove_N(
             mydir,
@@ -264,12 +264,12 @@ def main(**kwargs):
                 shutil.rmtree(os.path.join(mydir, "tmp"))
             except:
                 logger.info("It wasn't possible to remove the /tmp folder")
-        logger.info("\n\nFixame proccess done!\n")
+        logger.info("\n\nFixAME proccess done!\n")
 
     else:  # BINS MODE
         fasta_array = []
         name_sample = "bins"
-        contigs_bins = open(os.path.join(mydir, "tmp", "bin_contigs.txt"), "w+")
+        contigs_bins = open(os.path.join(mydir, "tmp", "bin_contigs.tsv"), "w+")
         # contigs_bins = defaultdict(list)
         merged = open(os.path.join(mydir, "tmp", "bins.fasta"), "w+")
         for sample in os.listdir(
@@ -303,9 +303,9 @@ def main(**kwargs):
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
             )
-            os.mkdir(os.path.join(mydir, "fixing_log"))
+            os.mkdir(os.path.join(mydir, "FixAME_log", "fixed"))
             closed_N = open(
-                os.path.join(mydir, "fixing_log", "fixame_initial_Ns_closed.txt"),
+                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"),
                 "w+",
             )
             check_overlap(
@@ -426,7 +426,7 @@ def main(**kwargs):
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
-                os.path.join(mydir, "fixing_log", "fixame_loop_" + str(count) + ".txt"),
+                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_loop_" + str(count) + ".tsv"),
                 "w+",
             )
             try:
@@ -449,10 +449,10 @@ def main(**kwargs):
         logger.info("Errors fixing complete")
         logger.info(
             "You can find the fixing log at {}".format(
-                os.path.join(mydir, "fixing_log")
+                os.path.join(mydir,"FixAME_log","fixed")
             )
         )
-        os.mkdir(os.path.join(mydir, "fixame_results"))
+        #os.mkdir(os.path.join(mydir, "FixAME_result"))
         logger.info("Polishing the sequences...")
         remove_N(
             mydir,
@@ -468,7 +468,7 @@ def main(**kwargs):
 
         ## Spliting the bins
         df = pd.read_table(
-            os.path.join(mydir, "tmp", "bin_contigs.txt"),
+            os.path.join(mydir, "tmp", "bin_contigs.tsv"),
             names=["sample_name", "contig"],
         )
         error_df = pd.merge(error_df, df, on=["contig"], how="left")
@@ -483,7 +483,7 @@ def main(**kwargs):
             tmp_id.close()
             cmd = "filterbyname.sh in={} out={} names={} include=t".format(
                 os.path.join(mydir, "tmp", "bins_unordered.fasta"),
-                os.path.join(mydir, "fixame_results", sample_name + "_fixame.fasta"),
+                os.path.join(mydir, "FixAME_result", sample_name + ".fixame.fasta"),
                 os.path.join(mydir, "tmp", "tmp_fasta"),
             )
             subprocess.run(
@@ -500,7 +500,7 @@ def main(**kwargs):
             )
 
         os.remove(os.path.join(mydir, "tmp", "bins_unordered.fasta"))
-        os.remove(os.path.join(mydir, "fixame_results", "bins_fixame.fasta"))
+        os.remove(os.path.join(mydir, "FixAME_result", "bins.fixame.fasta"))
         os.remove(os.path.join(mydir, "new_fastas", "bins_renewed.fasta"))
         os.remove(os.path.join(mydir, "tmp", "tmp_fasta"))
 
@@ -510,7 +510,7 @@ def main(**kwargs):
                 shutil.rmtree(os.path.join(mydir, "tmp"))
             except:
                 logger.info("It wasn't possible to remove the /tmp folder")
-        logger.info("\n\nFixame proccess done!\n")
+        logger.info("\n\nFixAME proccess done!\n")
 
 
 def temp_average_read(r1_fastq):
@@ -1212,7 +1212,7 @@ def build_N(
     )
     error_df["status"] = ""
     logger.warning(
-        "\n\nFixame could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors - {}\n * Edge reads coverage - {}\n".format(
+        "\n\nFixAME could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors - {}\n * Edge reads coverage - {}\n".format(
             len(error_df),
             len(error_df["contig"].unique()),
             len(error_df[error_df["type_of_error"] == "local_assembly_error"]),
@@ -1429,7 +1429,7 @@ def remove_N(
     records.sort(key=lambda r: -len(r))
     SeqIO.write(
         records,
-        os.path.join(output_dir, "fixame_results", name_fasta + "_fixame.fasta"),
+        os.path.join(output_dir, "FixAME_result", name_fasta + ".fixame.fasta"),
         "fasta",
     )
 
@@ -1451,7 +1451,7 @@ def check_reads_N_edges(
 
     mean_frag_len = 2 * av_readlen + mean_gap
     no_support = open(
-        os.path.join(output_dir, "fixing_log", "fixame_without_read_support.txt"), "a"
+        os.path.join(output_dir, "FixAME_log", "FixAME_without_read_support.tsv"), "a"
     )
     for start, end, space in N_pos:
         check_valid = ""
@@ -1497,7 +1497,7 @@ def check_reads_N_edges(
 
         if os.stat(left_right).st_size == 0:
             no_support.write(
-                "No read support around:\t{}:{}-{}\n".format(
+                "{}\t{}\t{}\n".format(
                     contig_name,
                     start + count - (3 * av_readlen),
                     end + count - (3 * av_readlen),
@@ -1587,7 +1587,7 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
 
 def final_output(output, df, features):
     df.to_csv(
-        os.path.join(output, "Fixame_AssemblyErrors_report.txt"),
+        os.path.join(output, "FixAME_table","FixAME_AssemblyErrors_report.tsv"),
         columns=[
             "contig",
             "start",
@@ -1604,9 +1604,9 @@ def final_output(output, df, features):
     # g_unstack = grouped.unstack(['status','type_of_error']).reset_index()
     # g_unstack.columns = ['sample_name','contig','Edges_events', 'Local_error_events', 'Fixed_local_error']
     # g_unstack[['Edges_events','Local_error_events','Fixed_local_error']] = g_unstack[['Edges_events','Local_error_events','Fixed_local_error']].fillna(0).astype(int)
-    # g_unstack.to_csv(os.path.join(output, "Fixame_Summary.txt"), index=None, sep='\t')
+    # g_unstack.to_csv(os.path.join(output, "FixAME_Summary.txt"), index=None, sep='\t')
 
-    extra_features = open(os.path.join(output, "Fixame_features.txt"), "w+")
+    extra_features = open(os.path.join(output,"FixAME_table", "FixAME_features_report.tsv"), "w+")
     if features:
         extra_features.write("contig\tfeature\tcount\n")
         for item in features:

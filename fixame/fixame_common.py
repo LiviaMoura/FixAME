@@ -15,7 +15,7 @@ def common_validate(**kwargs):
     """
     *common args*
     fasta:          fasta file for genome|metagenome [.fasta|.fa|.fna]
-    output_dir:     output directory where it'll created a fixame_[date] folder
+    output_dir:     output directory where it'll created a FixAME_[date] folder
     bins:           folder cointaining bins [.fasta|.fa|.fna]
     #r12:            Interlaced SYNCED forward and reverse paired-end reads
     r1:             Forward paired-end reads
