@@ -1266,6 +1266,9 @@ def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
             "\t"
         )  # 0=header;1=pos;3=ref;4=var("," slipted);7=flags(;/= splited)
 
+        if not len(line_list) >= 7:
+            continue
+
         if line_list[0] in var_list.keys():
             if int(re.search("DP=(.+?);", line_list[7]).group(1)) >= dp_cov:
                 if (
