@@ -137,7 +137,10 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
         # if read.is_paired and get_tag('NM') <= num_mm:
         reference = read.reference_name
         reference = reference.split()[0]
-        reference_length = reference_to_length[reference]
+        if reference_to_length.get(reference):
+            reference_length = reference_to_length[reference]
+        else:
+            reference_length = 0
 
         if reference_length >= minimum_assembly_length and not read.is_unmapped:
             mismatches, query_length = read.get_tag("NM"), read.query_alignment_length
