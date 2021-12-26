@@ -30,9 +30,9 @@ def calculate_reference_lengths(fasta, minimum_assembly_length):
     length_dict = {}
     for record in SeqIO.parse(xopen(fasta), "fasta"):
         length = len(record.seq)
-        if length >= minimum_assembly_length:
-            id_ = record.id
-            length_dict[id_] = length
+        #if length >= minimum_assembly_length:
+        id_ = record.id
+        length_dict[id_] = length
     return length_dict
 
 
@@ -137,10 +137,7 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
         # if read.is_paired and get_tag('NM') <= num_mm:
         reference = read.reference_name
         reference = reference.split()[0]
-        if reference_to_length.get(reference):
-            reference_length = reference_to_length[reference]
-        else:
-            reference_length = 0
+        reference_length = reference_to_length[reference]
 
         if reference_length >= minimum_assembly_length and not read.is_unmapped:
             mismatches, query_length = read.get_tag("NM"), read.query_alignment_length
