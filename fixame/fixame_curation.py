@@ -1089,7 +1089,7 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     samfile = ps.AlignmentFile(bam_sorted + "_sorted.bam", "rb")
     match_reads = list()
 
-    for record in SeqIO.parse(xopen('res_R1.fastq'), "fastq"):
+    for record in SeqIO.parse(xopen(r1), "fastq"):
         firstread = record.name
         break
 
