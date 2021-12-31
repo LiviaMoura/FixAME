@@ -1089,7 +1089,7 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     samfile = ps.AlignmentFile(bam_sorted + "_sorted.bam", "rb")
     match_reads = list()
 
-    command = "head -n1 {}".format(r1)
+    command = "head -n1 {}".format(xopen(r1))
     suffixr1 = subprocess.run(
         command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
     )
