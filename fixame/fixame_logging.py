@@ -35,7 +35,7 @@ def fixame_logging(logger, log_dir, log_level=None, filename=None):
     logger.setLevel(log_level)
 
     if filename is None:
-        filename = os.path.join(log_dir,"FixAME_log", "FixAME.log")
+        filename = os.path.join(log_dir, "FixAME_log", "FixAME.log")
 
     log_formatter = logging.Formatter(FixAME_LOGGING_FORMAT)
 

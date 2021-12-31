@@ -55,7 +55,7 @@ def parse_args(args):
     sysflags.add_argument(
         "-t", "--threads", help="Number of threads [6]", default=6, type=int
     )
-    sysflags.add_argument( 
+    sysflags.add_argument(
         "--force",
         action="store_true",
         default=False,

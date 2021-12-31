@@ -91,7 +91,9 @@ def main(**kwargs):
             os.mkdir(os.path.join(mydir, "FixAME_log", "fixed"))
 
             closed_N = open(
-                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"),
+                os.path.join(
+                    mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"
+                ),
                 "w+",
             )
             check_overlap(
@@ -214,7 +216,9 @@ def main(**kwargs):
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
-                os.path.join(mydir, "FixAME_log","fixed", "FixAME_loop_" + str(count) + ".tsv"),
+                os.path.join(
+                    mydir, "FixAME_log", "fixed", "FixAME_loop_" + str(count) + ".tsv"
+                ),
                 "w+",
             )
             try:
@@ -240,7 +244,7 @@ def main(**kwargs):
                 os.path.join(mydir, "FixAME_log", "fixed")
             )
         )
-        #os.mkdir(os.path.join(mydir, "FixAME_result"))
+        # os.mkdir(os.path.join(mydir, "FixAME_result"))
         logger.info("Polishing the sequences...")
         remove_N(
             mydir,
@@ -305,7 +309,9 @@ def main(**kwargs):
             )
             os.mkdir(os.path.join(mydir, "FixAME_log", "fixed"))
             closed_N = open(
-                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"),
+                os.path.join(
+                    mydir, "FixAME_log", "fixed", "FixAME_initial_Ns_closed.tsv"
+                ),
                 "w+",
             )
             check_overlap(
@@ -426,7 +432,9 @@ def main(**kwargs):
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
-                os.path.join(mydir, "FixAME_log", "fixed", "FixAME_loop_" + str(count) + ".tsv"),
+                os.path.join(
+                    mydir, "FixAME_log", "fixed", "FixAME_loop_" + str(count) + ".tsv"
+                ),
                 "w+",
             )
             try:
@@ -449,10 +457,10 @@ def main(**kwargs):
         logger.info("Errors fixing complete")
         logger.info(
             "You can find the fixing log at {}".format(
-                os.path.join(mydir,"FixAME_log","fixed")
+                os.path.join(mydir, "FixAME_log", "fixed")
             )
         )
-        #os.mkdir(os.path.join(mydir, "FixAME_result"))
+        # os.mkdir(os.path.join(mydir, "FixAME_result"))
         logger.info("Polishing the sequences...")
         remove_N(
             mydir,
@@ -603,11 +611,15 @@ def check_overlap(
                             error_df.loc[
                                 (error_df["contig"] == contig_name)
                                 & (start < error_df["N_build_start"])
-                                & (end < error_df["N_build_end"]), "N_build_start"] = error_df["N_build_start"] + 3*av_readlen
+                                & (end < error_df["N_build_end"]),
+                                "N_build_start",
+                            ] = (error_df["N_build_start"] + 3 * av_readlen)
                             error_df.loc[
                                 (error_df["contig"] == contig_name)
                                 & (start < error_df["N_build_start"])
-                                & (end < error_df["N_build_end"]), "N_build_end"] = error_df["N_build_end"] + 3*av_readlen
+                                & (end < error_df["N_build_end"]),
+                                "N_build_end",
+                            ] = (error_df["N_build_end"] + 3 * av_readlen)
 
             for j, (start, end, number) in enumerate(N_pos.get(contig_name)):
 
@@ -662,7 +674,7 @@ def check_overlap(
                                     "N_build_start",
                                 ] = (
                                     error_df["N_build_start"] - temp_dif_pos
-                                )  
+                                )
                                 error_df.loc[
                                     (error_df["contig"] == contig_name)
                                     & (
@@ -671,7 +683,7 @@ def check_overlap(
                                     "N_build_end",
                                 ] = (
                                     error_df["N_build_end"] - temp_dif_pos
-                                )  
+                                )
 
                             else:
                                 error_df.loc[
@@ -977,11 +989,11 @@ def check_overlap(
                         )
                     )
         else:
-            if (N_target.get(contig_name)):
+            if N_target.get(contig_name):
                 new_target = N_target.get(contig_name)
 
         if not user_file:
-            
+
             with open(os.path.join(output_dir, "tmp", "target"), "a") as file_target:
                 for start, end in new_target:
                     file_target.write(
@@ -1076,6 +1088,16 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     Step used to keep only interesting reads to reduce the fastq's size"""
     samfile = ps.AlignmentFile(bam_sorted + "_sorted.bam", "rb")
     match_reads = list()
+
+    command = "head -n1 {}".format(r1)
+    suffixr1 = subprocess.run(
+        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+    )
+
+    addsuffix = False
+    if "/1" in str(suffixr1):
+        addsuffix = True
+
     for read in samfile.fetch():
         if not read.has_tag("NM"):
             continue
@@ -1087,25 +1109,61 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
 
     ### creating a file with unique reads names that fulfill the criteria above
     match_reads = list(set(match_reads))
-    with open(output_dir + "/tmp/matched_reads", "w") as outfile:
-        outfile.write("\n".join(str(item) for item in match_reads))
-    outfile.close()
+    if addsuffix:
+        with open(output_dir + "/tmp/matched_reads_r1", "w") as outfile:
+            outfile.write("\n".join(str(item) + "/1" for item in match_reads))
+        outfile.close()
+        with open(output_dir + "/tmp/matched_reads_r2", "w") as outfile:
+            outfile.write("\n".join(str(item) + "/2" for item in match_reads))
+        outfile.close()
+
+        subprocess.run(
+            [
+                os.path.join("filterbyname.sh"),
+                "in=" + r1,
+                "out=" + output_dir + "/tmp/res_R1.fastq",
+                "names=" + output_dir + "/tmp/matched_reads_r1",
+                "include=t",
+                "overwrite=t",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        subprocess.run(
+            [
+                os.path.join("filterbyname.sh"),
+                "in=" + r2,
+                "out=" + output_dir + "/tmp/res_R2.fastq",
+                "names=" + output_dir + "/tmp/matched_reads_r2",
+                "include=t",
+                "overwrite=t",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    else:
+        with open(output_dir + "/tmp/matched_reads", "w") as outfile:
+            outfile.write("\n".join(str(item) for item in match_reads))
+        outfile.close()
+
+        subprocess.run(
+            [
+                os.path.join("filterbyname.sh"),
+                "in=" + r1,
+                "in2=" + r2,
+                "out=" + output_dir + "/tmp/res_R1.fastq",
+                "out2=" + output_dir + "/tmp/res_R2.fastq",
+                "names=" + output_dir + "/tmp/matched_reads",
+                "include=t",
+                "overwrite=t",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     ### Filtering original fastq with the high stringency reads
-    subprocess.run(
-        [
-            os.path.join("filterbyname.sh"),
-            "in=" + r1,
-            "in2=" + r2,
-            "out=" + output_dir + "/tmp/res_R1.fastq",
-            "out2=" + output_dir + "/tmp/res_R2.fastq",
-            "names=" + output_dir + "/tmp/matched_reads",
-            "include=t",
-            "overwrite=t",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
 
 
 def build_N(
@@ -1392,7 +1450,7 @@ def remove_N(
         actual_start, actual_end = 0, 0
         contig = checked.id
         seq_mutable = checked.seq.tomutable()
-        
+
         if N_pos.get(contig):
             check_edges = N_pos[contig][1:-1]
             if check_edges:
@@ -1420,7 +1478,7 @@ def remove_N(
             fasta_wo_N = remove_N_slave(
                 contig, seq_mutable, actual_start, actual_end, av_readlen
             )
-        else: 
+        else:
             fasta_wo_N = ">" + contig + "\n" + seq_mutable + "\n"
         unordered_fasta.write(str(fasta_wo_N))
     unordered_fasta.close()
@@ -1590,7 +1648,7 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
 
 def final_output(output, df, features):
     df.to_csv(
-        os.path.join(output, "FixAME_table","FixAME_AssemblyErrors_report.tsv"),
+        os.path.join(output, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"),
         columns=[
             "contig",
             "start",
@@ -1609,7 +1667,9 @@ def final_output(output, df, features):
     # g_unstack[['Edges_events','Local_error_events','Fixed_local_error']] = g_unstack[['Edges_events','Local_error_events','Fixed_local_error']].fillna(0).astype(int)
     # g_unstack.to_csv(os.path.join(output, "FixAME_Summary.txt"), index=None, sep='\t')
 
-    extra_features = open(os.path.join(output,"FixAME_table", "FixAME_features_report.tsv"), "w+")
+    extra_features = open(
+        os.path.join(output, "FixAME_table", "FixAME_features_report.tsv"), "w+"
+    )
     if features:
         extra_features.write("contig\tfeature\tcount\n")
         for item in features:

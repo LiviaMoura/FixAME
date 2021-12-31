@@ -30,7 +30,7 @@ def calculate_reference_lengths(fasta, minimum_assembly_length):
     length_dict = {}
     for record in SeqIO.parse(xopen(fasta), "fasta"):
         length = len(record.seq)
-        #if length >= minimum_assembly_length:
+        # if length >= minimum_assembly_length:
         id_ = record.id
         length_dict[id_] = length
     return length_dict
@@ -485,7 +485,9 @@ def main(**kwargs):
             kwargs.get("threads"),
         )
 
-        extra_features = open(os.path.join(mydir,"FixAME_table", "FixAME_features_report.tsv"), "w+")
+        extra_features = open(
+            os.path.join(mydir, "FixAME_table", "FixAME_features_report.tsv"), "w+"
+        )
         if features_list_dict:
             extra_features.write("contig\tfeature\tcount\n")
             for item in features_list_dict:
@@ -520,7 +522,8 @@ def main(**kwargs):
         )
 
         with open(
-            os.path.join(mydir, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"), "w+"
+            os.path.join(mydir, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"),
+            "w+",
         ) as error_loc:
             error_loc.write(
                 "contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n"
@@ -628,7 +631,6 @@ def main(**kwargs):
             logger.error("Something went wrong")
             sys.exit()
 
-
         try:
             logger.info("Trying to find regions with local assembly errors")
             (
@@ -655,7 +657,8 @@ def main(**kwargs):
         )
 
         with open(
-            os.path.join(mydir,"FixAME_table","FixAME_AssemblyErrors_report.tsv"), "w+"
+            os.path.join(mydir, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"),
+            "w+",
         ) as error_loc:
             error_loc.write(
                 "contig_name\terror_start\terror_end\tn_affected_bases\ttype_of_error\n"
