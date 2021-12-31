@@ -1089,13 +1089,12 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     samfile = ps.AlignmentFile(bam_sorted + "_sorted.bam", "rb")
     match_reads = list()
 
-    command = "head -n1 {}".format(xopen(r1))
-    suffixr1 = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
-    )
+    for record in SeqIO.parse(xopen('res_R1.fastq'), "fastq"):
+        firstread = record.name
+        break
 
     addsuffix = False
-    if "/1" in str(suffixr1):
+    if "/1" in str(firstread):
         addsuffix = True
 
     for read in samfile.fetch():
