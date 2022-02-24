@@ -97,7 +97,7 @@ def main(**kwargs):
                 "w+",
             )
             check_overlap(
-                mydir, fasta_in, av_readlen, kwargs.get("threads"), True, fixed=closed_N
+                mydir, fasta_in, av_readlen, kwargs.get("threads"), minimum_assembly_length, True, fixed=closed_N
             )
             logger.info(
                 "A new reference fasta {} was created".format(
@@ -206,6 +206,7 @@ def main(**kwargs):
                 mydir + "/new_fastas/" + name_fasta + "_renewed.fasta",
                 average_read_length,
                 organized_errors,
+                minimum_assembly_length
             )
 
         except Exception as e:
@@ -231,6 +232,7 @@ def main(**kwargs):
                     kwargs.get("dp_cov"),
                     av_readlen,
                     error_df,
+                    minimum_assembly_length
                 )
             except Exception as e:
                 logger.exception("Something went wrong")
@@ -256,6 +258,8 @@ def main(**kwargs):
             average_gap_length,
             average_gap_std,
             kwargs.get("threads"),
+            minimum_assembly_length,
+            error_df
         )
 
         error_df["sample_name"] = name_fasta
@@ -315,7 +319,7 @@ def main(**kwargs):
                 "w+",
             )
             check_overlap(
-                mydir, fasta_in, av_readlen, kwargs.get("threads"), True, fixed=closed_N
+                mydir, fasta_in, av_readlen, kwargs.get("threads"), minimum_assembly_length, True, fixed=closed_N
             )
             logger.info(
                 "A new reference fasta {} was created".format(
@@ -422,6 +426,7 @@ def main(**kwargs):
                 mydir + "/new_fastas/" + name_sample + "_renewed.fasta",
                 average_read_length,
                 organized_errors,
+                minimum_assembly_length,
             )
 
         except Exception as e:
@@ -447,6 +452,7 @@ def main(**kwargs):
                     kwargs.get("dp_cov"),
                     av_readlen,
                     error_df,
+                    minimum_assembly_length
                 )
             except Exception as e:
                 logger.exception("Something went wrong")
@@ -472,6 +478,8 @@ def main(**kwargs):
             average_gap_length,
             average_gap_std,
             kwargs.get("threads"),
+            minimum_assembly_length,
+            error_df
         )
 
         ## Spliting the bins
@@ -537,6 +545,7 @@ def check_overlap(
     fasta,
     av_readlen,
     thread,
+    minimum_assembly_length,
     user_file=False,
     error_df=pd.DataFrame(),
     fixed="",
@@ -558,7 +567,8 @@ def check_overlap(
             os.path.join(output_dir, "tmp", "v_" + str(count) + ".fasta"), "w"
         )
 
-    items = [seq_record for seq_record in SeqIO.parse(fasta, "fasta")]
+    all_items = [seq_record for seq_record in SeqIO.parse(fasta, "fasta")]
+    items = [seq_record for seq_record in SeqIO.parse(fasta, "fasta") if len(seq_record) >= minimum_assembly_length ]
 
     with ProcessPoolExecutor(thread) as executor:
         check_npos_result = executor.map(partial(check_npos, av_readlen), items)
@@ -582,7 +592,11 @@ def check_overlap(
             new_value = v[1:-1]
             N_pos[k] = new_value
 
-    for item in items:
+    for item in all_items:
+        if len(item.seq) < minimum_assembly_length:
+            new_fasta_temp.write(">{}\n{}\n".format(item.id, item.seq))
+            continue
+        
         contig_name = item.id
         new_target = list()
         control_index = list()
@@ -1170,6 +1184,7 @@ def build_N(
     fasta,
     av_readlen,
     organized_errors,
+    minimum_assembly_length,
 ):
     """Replace error for N and extend the contig's edges for N - pre-curation step"""
 
@@ -1191,6 +1206,10 @@ def build_N(
     for seq_record in SeqIO.parse(fasta, "fasta"):
         dict_len[seq_record.id] = len(seq_record)
         seq_mutable = ""
+
+        if  len(seq_record) < minimum_assembly_length:
+            fasta_N.write(">{}\n{}\n".format(seq_record.id, seq_record.seq))
+            continue
 
         if seq_record.id in set_keys:
             set_keys.remove(seq_record.id)
@@ -1280,7 +1299,7 @@ def build_N(
     return dict_len, error_df
 
 
-def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
+def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df, minimum_assembly_length):
     """Find changes on Ns position and replace them"""
 
     aligner(
@@ -1297,7 +1316,7 @@ def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
 
     # Run variant finder - bcftools
 
-    comm = "bcftools mpileup -R {}/target -A -B -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(
+    comm = "bcftools mpileup -R {}/target -A -B -Q 10 -f {}/v_{}.fasta {}/v_{}_sorted.bam".format(
         os.path.join(output_dir, "tmp"),
         os.path.join(output_dir, "tmp"),
         count - 1,
@@ -1363,6 +1382,12 @@ def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
     for seq_record in SeqIO.parse(
         os.path.join(output_dir, "tmp", "v_" + str(count - 1) + ".fasta"), "fasta"
     ):
+        if len(seq_record.seq) < minimum_assembly_length:
+            new_fasta_temp.write(
+                ">{}\n{}\n".format(seq_record.id, seq_record.seq)
+            )
+            continue
+
         pos_temp = 0
         if seq_record.id in var_list.keys():
             seq_mutable = seq_record.seq.tomutable()
@@ -1374,7 +1399,7 @@ def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
         else:
             new_fasta_temp.write(
                 ">{}\n{}\n".format(seq_record.id, seq_record.seq)
-            )  ##removi seq_mutable e substitui por seq_record.seq
+            )  
 
     new_fasta_temp.close()
 
@@ -1383,6 +1408,7 @@ def var_cal_fix(output_dir, count, fixed, thread, dp_cov, av_readlen, error_df):
         os.path.join(output_dir, "tmp", "snp_fasta.fasta"),
         av_readlen,
         thread,
+        minimum_assembly_length,
         error_df=error_df,
         fixed=fixed,
         count=count,
@@ -1400,6 +1426,8 @@ def remove_N(
     mean_gap,
     mean_gap_std,
     thread,
+    minimum_assembly_length,
+    error_df
 ):
     fasta_wo_N = ""
     ext_size = av_readlen * 3
@@ -1423,9 +1451,13 @@ def remove_N(
 
     for seq_record in SeqIO.parse(fasta_semifinal, "fasta"):
         actual_start, actual_end = 0, 0
+
         if seq_record.id in organized_errors.keys():
             to_be_checked.append(seq_record)
         else:
+            if len(seq_record.seq) < minimum_assembly_length:
+                unordered_fasta.write(str(">" + seq_record.id + "\n" + seq_record.seq + "\n"))
+                continue
             seq_mutable = seq_record.seq.tomutable()
             fasta_wo_N = remove_N_slave(
                 seq_record.id, seq_mutable, actual_start, actual_end, av_readlen
@@ -1453,7 +1485,7 @@ def remove_N(
         if N_pos.get(contig):
             check_edges = N_pos[contig][1:-1]
             if check_edges:
-                seq_mutable = check_reads_N_edges(
+                seq_mutable, error_df = check_reads_N_edges(
                     output_dir,
                     contig,
                     seq_mutable,
@@ -1462,6 +1494,7 @@ def remove_N(
                     mean_gap,
                     mean_gap_std,
                     check_edges,
+                    error_df
                 )
 
             # Edges
@@ -1493,6 +1526,8 @@ def remove_N(
         "fasta",
     )
 
+    return error_df
+
 
 def check_reads_N_edges(
     output_dir,
@@ -1503,6 +1538,7 @@ def check_reads_N_edges(
     mean_gap,
     mean_gap_std,
     N_pos,
+    error_df
 ):
     r_left = os.path.join(output_dir, "tmp", "r_left")
     r_right = os.path.join(output_dir, "tmp", "r_right")
@@ -1563,6 +1599,11 @@ def check_reads_N_edges(
                     end + count - (3 * av_readlen),
                 )
             )
+
+            error_df.loc[error_df['contig'] == contig_name, "count"] = error_df['start'] - (start + count - (3 * av_readlen)) 
+            idx = error_df[error_df['contig'] == contig_name]['count'].idxmin() 
+            error_df.at[idx,"type_of_error"] = "possible chimera"
+
             continue
         else:
             # print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
@@ -1621,7 +1662,7 @@ def check_reads_N_edges(
                 continue
 
     no_support.close()
-    return seq_mutable
+    return seq_mutable, error_df
 
 
 def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readlen):
@@ -1646,6 +1687,9 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
 
 
 def final_output(output, df, features):
+    
+    df.loc[(df['type_of_error'] == 'local_assembly_error') & (df['status'] != 'fixed'), 'status'] = 'Ns_inserted'
+    
     df.to_csv(
         os.path.join(output, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"),
         columns=[
@@ -1665,6 +1709,8 @@ def final_output(output, df, features):
     # g_unstack.columns = ['sample_name','contig','Edges_events', 'Local_error_events', 'Fixed_local_error']
     # g_unstack[['Edges_events','Local_error_events','Fixed_local_error']] = g_unstack[['Edges_events','Local_error_events','Fixed_local_error']].fillna(0).astype(int)
     # g_unstack.to_csv(os.path.join(output, "FixAME_Summary.txt"), index=None, sep='\t')
+
+    
 
     extra_features = open(
         os.path.join(output, "FixAME_table", "FixAME_features_report.tsv"), "w+"
