@@ -1688,7 +1688,7 @@ def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readl
 
 def final_output(output, df, features):
     
-    df.loc[(df['type_of_error'] == 'local_assembly_error') & (df['status'] != 'fixed'), 'status'] = 'Ns inserted'
+    df.loc[(df['type_of_error'] == 'local_assembly_error') & (df['status'] != 'fixed'), 'status'] = 'Ns_inserted'
     
     df.to_csv(
         os.path.join(output, "FixAME_table", "FixAME_AssemblyErrors_report.tsv"),
