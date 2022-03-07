@@ -338,7 +338,7 @@ def check_local_assembly_errors(reference):
             if position >= 1 and position <= reference_length_unpad:
                 error_positions_adjust.add(position)
 
-        error_positions_adjust = sorted(error_positions_adjust)
+        error_positions = sorted(error_positions_adjust)
 
         high_mismatch_positions = set()
 

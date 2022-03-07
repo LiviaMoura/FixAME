@@ -58,7 +58,7 @@ def aligner(
                 str(thread),
             ]
 
-            bt2_map = subprocess.Popen(bt2_map_cmd, stdout=subprocess.PIPE)
+            bt2_map = subprocess.run(bt2_map_cmd, stdout=subprocess.PIPE)
 
             samtools_sam_to_bam_cmd = ["samtools", "view", "-b", "-o", tmp_bam_out_path]
 
