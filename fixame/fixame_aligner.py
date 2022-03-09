@@ -16,7 +16,6 @@ def aligner(
     tmp_dir = os.path.join(output_dir, "tmp")
     index_path = os.path.join(tmp_dir, os.path.basename(fasta_path))
     tmp_bam_out_path = os.path.join(output_dir, "tmp", bam_out + ".bam")
-    # sorted_bam_out = bam_out + "_sorted.bam"
     tmp_sorted_bam_out_path = tmp_bam_out_path + "_sorted.bam"
 
     subprocess.run(
@@ -40,7 +39,9 @@ def aligner(
             ]
 
             bt2_build_index = subprocess.run(
-                bt2_build_index_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+                bt2_build_index_cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
 
             bt2_map_cmd = [
@@ -58,7 +59,9 @@ def aligner(
                 str(thread),
             ]
 
-            bt2_map = subprocess.Popen(bt2_map_cmd, stdout=subprocess.PIPE)
+            bt2_map = subprocess.Popen(
+                bt2_map_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+            )
 
             samtools_sam_to_bam_cmd = ["samtools", "view", "-b", "-o", tmp_bam_out_path]
 
@@ -66,7 +69,7 @@ def aligner(
                 samtools_sam_to_bam_cmd,
                 stdin=bt2_map.stdout,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
             )
 
         else:

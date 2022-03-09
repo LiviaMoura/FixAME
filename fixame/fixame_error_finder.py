@@ -138,8 +138,6 @@ def generate_n_pad_sequences(
     with open(out_fasta_path, "w") as out_fasta_path_fh:
         for record in SeqIO.parse(xopen(in_fasta_path), "fasta"):
             if len(record.seq) >= minimum_assembly_length:
-                print(record.id)
-
                 edit_seq = (n_pad, str(record.seq), n_pad)
                 edit_seq = "".join(edit_seq)
 
@@ -441,7 +439,7 @@ def get_pad_name_info(in_fasta_path, out_dir):
 
     pad_fasta_name_strip_ext = "_".join((in_fasta_name_strip_ext, "N-pad"))
 
-    pad_fasta_name = ".".join((pad_fasta_name_strip_ext, "fa"))
+    pad_fasta_name = ".".join((pad_fasta_name_strip_ext, "fasta"))
     pad_fasta_path = os.path.realpath(os.path.join(out_dir, "tmp", pad_fasta_name))
 
     return pad_fasta_name_strip_ext, pad_fasta_name, pad_fasta_path

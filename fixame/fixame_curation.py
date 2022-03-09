@@ -124,7 +124,7 @@ def main(**kwargs):
         ) = get_pad_name_info(closed_N_path, mydir)
 
         closed_N_pad_path = os.path.join(
-            mydir, "tmp", pad_fasta_name_strip_ext + "_renewed.fasta"
+            mydir, "tmp", pad_fasta_name_strip_ext + ".fasta"
         )
 
         closed_N_pad_path_strip_ext = os.path.splitext(pad_fasta_path)[0]
@@ -137,8 +137,6 @@ def main(**kwargs):
 
         try:
             logger.info("Creating N padded contigs/scaffolds")
-
-            print(closed_N_path)
 
             generate_n_pad_sequences(
                 closed_N_path, minimum_assembly_length, pad_fasta_path
@@ -155,7 +153,7 @@ def main(**kwargs):
                 mydir,
                 kwargs.get("threads"),
                 kwargs.get("minid"),
-                closed_N_path,
+                closed_N_pad_path,
                 r1=read1_in,
                 r2=read2_in,
                 r12=read12_in,
@@ -1157,8 +1155,6 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     """Filtering in reads with less than [2] mismatch.
     Step used to keep only interesting reads to reduce the fastq's size"""
 
-    print(bam_sorted)
-
     samfile = ps.AlignmentFile(bam_sorted + "_sorted.bam", "rb", threads=thread)
     match_reads = list()
 
@@ -1340,20 +1336,20 @@ def build_N(
     error_df["order"] = error_df.groupby("contig").cumcount() + 1
     error_df["len"] = error_df["contig"].map(dict_len)
     error_df["type_of_error"] = "local_assembly_error"
-    error_df.loc[
-        (error_df["start"] == 1) | (error_df["end"] == error_df["len"]), "type_of_error"
-    ] = "edge_reads_cov"
+    # error_df.loc[
+    #     (error_df["start"] == 1) | (error_df["end"] == error_df["len"]), "type_of_error"
+    # ] = "edge_reads_cov"
     error_df["N_build_start"] = error_df["start"] + (ext_size * error_df["order"])
     error_df["N_build_end"] = (
         error_df["end"] + (ext_size * error_df["order"]) + ext_size
     )
     error_df["status"] = ""
     logger.warning(
-        "\n\nFixAME could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors - {}\n * Edge reads coverage - {}\n".format(
+        "\n\nFixAME could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors".format(
             len(error_df),
             len(error_df["contig"].unique()),
             len(error_df[error_df["type_of_error"] == "local_assembly_error"]),
-            len(error_df[error_df["type_of_error"] == "edge_reads_cov"]),
+            # len(error_df[error_df["type_of_error"] == "edge_reads_cov"]),
         )
     )
 
