@@ -346,6 +346,7 @@ def main(**kwargs):
                 len(fasta_array)
             )
         )
+
         try:
             logger.info(
                 "Checking overlaping at N regions on {} and fix them".format(fasta_in)
@@ -366,14 +367,51 @@ def main(**kwargs):
                 True,
                 fixed=closed_N,
             )
-            logger.info(
-                "A new reference fasta {} was created".format(
-                    mydir + "/new_fastas/" + name_sample + "_renewed.fasta"
-                )
+
+            closed_N_path = os.path.join(
+                mydir, "new_fastas", name_fasta + "_renewed.fasta"
             )
+
+            logger.info("A new reference fasta {} was created".format(closed_N_path))
+            # logger.info(
+            #     "A new reference fasta {} was created".format(
+            #         mydir + "/new_fastas/" + name_sample + "_renewed.fasta"
+            #     )
+            # )
         except Exception as e:
             logger.exception("Something went wrong")
             raise e
+
+
+
+        (
+            pad_fasta_name_strip_ext,
+            pad_fasta_name,
+            pad_fasta_path,
+        ) = get_pad_name_info(closed_N_path, mydir)
+
+        closed_N_pad_path = os.path.join(
+            mydir, "tmp", pad_fasta_name_strip_ext + ".fasta"
+        )
+
+        closed_N_pad_path_strip_ext = os.path.splitext(pad_fasta_path)[0]
+
+        closed_N_pad_path_strip_ext_map_path = (
+            closed_N_pad_path_strip_ext + "_sorted.bam"
+        )
+
+        logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
+
+        try:
+            logger.info("Creating N padded contigs/scaffolds")
+
+            generate_n_pad_sequences(
+                closed_N_path, minimum_assembly_length, pad_fasta_path
+            )
+
+        except Exception as e:
+            logger.error(e)
+            sys.exit()
 
         try:
             logger.info("Mapping reads against the new reference")
@@ -385,7 +423,7 @@ def main(**kwargs):
                 r1=read1_in,
                 r2=read2_in,
                 r12=read12_in,
-                bam_out=name_sample + "_renewed",
+                bam_out=pad_fasta_name_strip_ext#name_sample + "_renewed",
             )
         except Exception as e:
             logger.exception("Something went wrong")
@@ -400,7 +438,7 @@ def main(**kwargs):
                 mydir,
                 kwargs.get("threads"),
                 num_mm,
-                mydir + "/tmp/" + name_sample + "_renewed",
+                closed_N_pad_path_strip_ext,#mydir + "/tmp/" + name_sample + "_renewed",
                 read1_in,
                 read2_in,
                 read12_in,
@@ -425,7 +463,7 @@ def main(**kwargs):
                 template_length_max,
                 average_gap_std,
             ) = parse_map(
-                mydir + "/tmp/" + name_sample + "_renewed_sorted.bam",
+                closed_N_pad_path_strip_ext_map_path, #mydir + "/tmp/" + name_sample + "_renewed_sorted.bam",
                 num_mm,
                 kwargs.get("threads"),
                 minimum_assembly_length,
@@ -1344,14 +1382,6 @@ def build_N(
         error_df["end"] + (ext_size * error_df["order"]) + ext_size
     )
     error_df["status"] = ""
-    logger.warning(
-        "\n\nFixAME could detect a total of {} errors in {} contig(s)\n * Local Assembly Errors".format(
-            len(error_df),
-            len(error_df["contig"].unique()),
-            len(error_df[error_df["type_of_error"] == "local_assembly_error"]),
-            # len(error_df[error_df["type_of_error"] == "edge_reads_cov"]),
-        )
-    )
 
     return dict_len, error_df
 
@@ -1773,11 +1803,7 @@ def final_output(output, df, features):
         sep="\t",
     )
 
-    # grouped = df.groupby(['sample_name', 'contig', 'type_of_error', 'status'])[['type_of_error']].agg('count')
-    # g_unstack = grouped.unstack(['status','type_of_error']).reset_index()
-    # g_unstack.columns = ['sample_name','contig','Edges_events', 'Local_error_events', 'Fixed_local_error']
-    # g_unstack[['Edges_events','Local_error_events','Fixed_local_error']] = g_unstack[['Edges_events','Local_error_events','Fixed_local_error']].fillna(0).astype(int)
-    # g_unstack.to_csv(os.path.join(output, "FixAME_Summary.txt"), index=None, sep='\t')
+    
 
     extra_features = open(
         os.path.join(output, "FixAME_table", "FixAME_features_report.tsv"), "w+"
