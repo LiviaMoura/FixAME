@@ -343,6 +343,7 @@ def check_local_assembly_errors(reference):
     else:
         error_positions = set()
         high_mismatch_positions = set()
+        error_positions_adjust = set()
 
     return (
         reference,

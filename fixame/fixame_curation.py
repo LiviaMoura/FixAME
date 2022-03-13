@@ -133,6 +133,8 @@ def main(**kwargs):
             closed_N_pad_path_strip_ext + "_sorted.bam"
         )
 
+        print(f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}")
+
         logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
 
         try:
@@ -183,10 +185,15 @@ def main(**kwargs):
 
         try:
             logger.info("Generating some metrics to keep running")
+            # reference_to_length = calculate_reference_lengths(
+            #     fasta_in,
+            #     minimum_assembly_length,
+            # )
             reference_to_length = calculate_reference_lengths(
-                fasta_in,
+                mydir + "/new_fastas/" + name_fasta + "_renewed.fasta",
                 minimum_assembly_length,
             )
+            
 
             (
                 bam_dict,
@@ -252,7 +259,8 @@ def main(**kwargs):
             logger.exception("Something went wrong")
             raise e
 
-        logger.info("\nStarting to fix: {}\n".format(os.path.basename(fasta_in)))
+        logger.info("\n --- Starting to fix sample {} ---\n".format(name_fasta))
+        #logger.info("\nStarting to fix: {}\n".format(os.path.basename(fasta_in)))
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
@@ -286,7 +294,7 @@ def main(**kwargs):
             )
         )
         # os.mkdir(os.path.join(mydir, "FixAME_result"))
-        logger.info("Polishing the sequences...")
+        logger.info("\n --- Polishing the sequences ---\n")
         remove_N(
             mydir,
             name_fasta,
@@ -369,7 +377,7 @@ def main(**kwargs):
             )
 
             closed_N_path = os.path.join(
-                mydir, "new_fastas", name_fasta + "_renewed.fasta"
+                mydir, "new_fastas", name_sample + "_renewed.fasta"
             )
 
             logger.info("A new reference fasta {} was created".format(closed_N_path))
@@ -381,8 +389,6 @@ def main(**kwargs):
         except Exception as e:
             logger.exception("Something went wrong")
             raise e
-
-
 
         (
             pad_fasta_name_strip_ext,
@@ -400,7 +406,9 @@ def main(**kwargs):
             closed_N_pad_path_strip_ext + "_sorted.bam"
         )
 
-        logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
+        print(f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}")
+
+        logger.info("\n --- Begin analysis {} ---\n".format(name_sample))
 
         try:
             logger.info("Creating N padded contigs/scaffolds")
@@ -517,7 +525,7 @@ def main(**kwargs):
             logger.exception("Something went wrong")
             raise e
 
-        logger.info("Starting to fix all bins\n")
+        logger.info("\n --- Starting to fix all bins ---\n")
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
@@ -551,7 +559,7 @@ def main(**kwargs):
             )
         )
         # os.mkdir(os.path.join(mydir, "FixAME_result"))
-        logger.info("Polishing the sequences...")
+        logger.info("\n --- Polishing the sequences - this can take a while ---\n")
         remove_N(
             mydir,
             name_sample,
