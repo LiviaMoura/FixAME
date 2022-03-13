@@ -125,27 +125,59 @@ def check_direct_features_parallel(fasta, threads):
     return features_list
 
 
-def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_length):
+def generate_n_pad_sequences(
+    in_fasta_path,
+    minimum_assembly_length,
+    out_fasta_path,
+    n_pad_length=50,
+):
+    "Generate n-pad sequences"
+
+    n_pad = "N" * n_pad_length
+
+    with open(out_fasta_path, "w") as out_fasta_path_fh:
+        for record in SeqIO.parse(xopen(in_fasta_path), "fasta"):
+            if len(record.seq) >= minimum_assembly_length:
+                edit_seq = (n_pad, str(record.seq), n_pad)
+                edit_seq = "".join(edit_seq)
+
+                edit_fa = ">" + record.id + "\n" + edit_seq
+
+                out_fasta_path_fh.write(edit_fa + "\n")
+
+
+def parse_map(
+    bam_file,
+    num_mm,
+    threads,
+    minimum_assembly_length,
+    reference_to_length,
+    n_pad_len=50,
+):
     "Parse bam file to primarily return information on read locations and mismatches. Also, calculates info on reads and pairing."
 
     template_lengths, read_lengths = [], []
     bam_dict, reference_read_lengths = defaultdict(list), defaultdict(list)
     bam_parsed = ps.AlignmentFile(bam_file, "rb", threads=threads)
 
+    n_len = n_pad_len * 2
+
     for read in bam_parsed:
-        # if read.is_paired and reference == read.next_reference_name and read.is_proper_pair and read.get_tag('NM') <= num_mm:
-        # if read.is_paired and get_tag('NM') <= num_mm:
         reference = read.reference_name
         reference = reference.split()[0]
         reference_length = reference_to_length[reference]
 
         if reference_length >= minimum_assembly_length and not read.is_unmapped:
-            mismatches, query_length = read.get_tag("NM"), read.query_alignment_length
+            # mismatches, query_length = read.get_tag("NM"), read.query_alignment_length
+            mismatches, query_length = (
+                read.get_tag("XM") - read.get_tag("XN"),
+                read.query_alignment_length,
+            )
+
             fraction_id = 1 - mismatches / query_length
 
             if fraction_id >= 0.95:
                 read_name = read.query_name
-                # mapq = read.mapping_quality
                 template_length = read.template_length
                 reference_positions = read.get_reference_positions(full_length=False)
                 start_pos = reference_positions[0] + 1
@@ -166,9 +198,6 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
                     reference_read_lengths[reference].append(query_length)
                     read_lengths.append(query_length)
 
-    average_template_length = pd.Series(template_lengths).mean()
-    # average_read_length = pd.Series(read_lengths).mean()
-
     ## few bam metrics
     cmd = """samtools stats {} | grep "^SN" | cut -f 2- """.format(bam_file)
 
@@ -183,23 +212,16 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
         if array_line[0] == "insert size standard deviation":
             average_gap_std = int(float(array_line[1].strip()))
 
-    # print(mean_gap, mean_gap_dev)
-    # average_template_length = int(round(average_template_length))
-    # average_read_length = int(round(average_read_length))
+    average_template_length = pd.Series(template_lengths).mean()
+    average_template_length = int(average_template_length)
 
     var_template_length = pd.Series(template_lengths).std()
-    # var_read_length = pd.Series(read_lengths).std()
 
     template_length_min = average_template_length - var_template_length
     template_length_max = average_template_length + var_template_length
 
     template_length_min = int(template_length_min)
     template_length_max = int(template_length_max)
-
-    # average_gap_length = average_template_length - average_read_length * 2
-    # average_gap_length = int(average_gap_length)
-
-    # print(average_template_length,'TEMPLETA_LENTH',average_gap_length,'GAP_LENGH')
 
     return (
         bam_dict,
@@ -216,11 +238,13 @@ def parse_map(bam_file, num_mm, threads, minimum_assembly_length, reference_to_l
 def check_local_assembly_errors(reference):
     "Check for local assembly errors and identify regions with high variability"
     look_len = 5  # standard value
+    n_pad_length = 50
     read_lengths = reference_read_lengths[reference]
-    reference_length = reference_to_length[reference]
+    reference_length_unpad = reference_to_length[reference]
+    reference_length = reference_length_unpad + n_pad_length * 2
+
     reference_total_length = sum(read_lengths)
     reference_coverage = reference_total_length / reference_length
-    read_to_jump_references_list = []
 
     if reference_coverage >= fasta_cov:
         infos = bam_dict[reference]
@@ -232,8 +256,6 @@ def check_local_assembly_errors(reference):
 
         perfect_matches_counts_dict = defaultdict(int)
         mismatch_positions_counts_dict = defaultdict(int)
-
-        read_to_mismatch_positions = {}
 
         for info in infos:
             (
@@ -248,17 +270,13 @@ def check_local_assembly_errors(reference):
             if mismatches <= num_mm:
                 if (
                     proper_pair
-                    or end_position <= template_length_max
-                    or end_position >= reference_length - template_length_max
+                    or end_position <= template_length_max + n_pad_length
+                    or end_position
+                    >= reference_length - (template_length_max + n_pad_length)
                 ):
                     for position in range(start_position, end_position + 1):
                         reference_position_to_reads[position].add(read)
                         read_to_positions[read].add(position)
-                # elif end_position <= template_length_max:
-                #     parse_read_positions(start_position, end_position)
-                #
-                # elif end_position >= reference_length - template_length_max:
-                #     parse_read_positions(start_position, end_position)
 
                 if mismatches == 0:
                     for position in range(start_position, end_position + 1):
@@ -272,7 +290,7 @@ def check_local_assembly_errors(reference):
 
         high_mismatch_positions = set()
 
-        reference_positions = set(range(1, reference_length + 1))
+        reference_positions = set(range(n_pad_length + 1, reference_length + 1))
 
         for reference_position in sorted(reference_positions):
             mismatch_count = mismatch_positions_counts_dict[reference_position]
@@ -291,10 +309,12 @@ def check_local_assembly_errors(reference):
             back_reference_position = reference_position - look_len
             ahead_reference_position = reference_position + look_len
 
-            if back_reference_position < 1:
-                back_reference_position = 1
+            if back_reference_position <= n_pad_length:
+                back_reference_position = n_pad_length + 1
+
             if ahead_reference_position > reference_length:
                 ahead_reference_position = reference_length
+
             for read in reads:
                 if pass_count > 0:
                     break
@@ -308,15 +328,29 @@ def check_local_assembly_errors(reference):
                     break
 
         error_positions = set(reference_positions) - good_positions
-        error_positions = sorted(error_positions)
+        error_positions_adjust = set()
 
-        high_mismatch_positions = sorted(high_mismatch_positions)
+        for position in error_positions:
+            position = position - n_pad_length
+
+            if position >= 1 and position <= reference_length_unpad:
+                error_positions_adjust.add(position)
+
+        error_positions_adjust = sorted(error_positions_adjust)
+
+        high_mismatch_positions = set()
 
     else:
         error_positions = set()
         high_mismatch_positions = set()
+        error_positions_adjust = set()
 
-    return reference, reference_coverage, error_positions, high_mismatch_positions
+    return (
+        reference,
+        reference_coverage,
+        error_positions_adjust,
+        high_mismatch_positions,
+    )
 
 
 def check_local_assembly_errors_parallel(
@@ -340,7 +374,6 @@ def check_local_assembly_errors_parallel(
 
     with ProcessPoolExecutor(threads) as executor:
         execute_result = executor.map(check_local_assembly_errors, references)
-        # print(list(execute_result), 'EXECUTE RESULT\n')
         for (
             reference,
             reference_coverage,
@@ -401,6 +434,18 @@ def organizing_found_errors(av_readlen, dict_replace_0):
     return dict_replace_chunked
 
 
+def get_pad_name_info(in_fasta_path, out_dir):
+    in_fasta_name = os.path.basename(in_fasta_path)
+    in_fasta_name_strip_ext = os.path.splitext(in_fasta_name)[0]
+
+    pad_fasta_name_strip_ext = "_".join((in_fasta_name_strip_ext, "N-pad"))
+
+    pad_fasta_name = ".".join((pad_fasta_name_strip_ext, "fasta"))
+    pad_fasta_path = os.path.realpath(os.path.join(out_dir, "tmp", pad_fasta_name))
+
+    return pad_fasta_name_strip_ext, pad_fasta_name, pad_fasta_path
+
+
 def main(**kwargs):
 
     output_dir = kwargs.get("output_dir")
@@ -431,9 +476,26 @@ def main(**kwargs):
 
     if method == 0:
         fasta_in = os.path.realpath(os.path.expanduser(kwargs.get("fasta")))
+
         name_fasta = os.path.splitext(os.path.basename(fasta_in))[0]
 
-        logger.info("\n --- Analysing the file {} ---\n".format(name_fasta))
+        (
+            pad_fasta_name_strip_ext,
+            pad_fasta_name,
+            pad_fasta_path,
+        ) = get_pad_name_info(name_fasta, output_dir)
+
+        logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
+
+        try:
+            logger.info("Creating N padded contigs/scaffolds")
+
+            generate_n_pad_sequences(fasta_in, minimum_assembly_length, pad_fasta_path)
+
+        except:
+            logger.error("Something went wrong")
+            print(traceback.format_exc())
+            sys.exit()
 
         try:
             logger.info("Mapping reads against the reference")
@@ -441,12 +503,13 @@ def main(**kwargs):
                 mydir,
                 kwargs.get("threads"),
                 kwargs.get("minid"),
-                fasta_in,
+                pad_fasta_path,
                 r1=read1_in,
                 r2=read2_in,
                 r12=read12_in,
-                bam_out=name_fasta,
+                bam_out=pad_fasta_name_strip_ext,
             )
+
         except:
             logger.error("Something went wrong")
             print(traceback.format_exc())
@@ -455,7 +518,7 @@ def main(**kwargs):
         fasta_cov, num_mm = kwargs.get("fasta_cov"), kwargs.get("num_mismatch")
 
         try:
-            logger.info("Generating some metrics to keep running")
+            logger.info("Parsing mapped reads")
             reference_to_length = calculate_reference_lengths(
                 fasta_in, minimum_assembly_length
             )
@@ -470,14 +533,15 @@ def main(**kwargs):
                 template_length_max,
                 average_gap_std,
             ) = parse_map(
-                mydir + "/tmp/" + name_fasta + "_sorted.bam",
+                os.path.join(mydir, "tmp", pad_fasta_name_strip_ext + "_sorted.bam"),
                 num_mm,
                 kwargs.get("threads"),
                 minimum_assembly_length,
                 reference_to_length,
             )
-        except:
-            logger.error("Something went wrong")
+
+        except Exception as e:
+            logger.error(e)
             sys.exit()
 
         features_list_dict = check_direct_features_parallel(
