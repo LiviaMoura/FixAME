@@ -21,7 +21,7 @@ class CustomHelpFormatter(argparse.HelpFormatter):
 fmt = lambda prog: CustomHelpFormatter(prog)
 
 
-VERSION = "0.9.9"
+VERSION = "1.0.0"
 
 
 def printHelp():
@@ -114,7 +114,7 @@ def parse_args(args):
     curflags.add_argument(
         "-minid",
         metavar="FLOAT",
-        help="Minumum identity for the first alignment [0.9]",
+        help="Minimum identity for the first alignment [0.9]",
         default=0.9,
         type=float,
     )
@@ -141,12 +141,12 @@ def parse_args(args):
         default=2,
         type=int,
     )
-    curflags.add_argument(
-        "--split-curated",
-        action="store_true",
-        default=False,
-        help="Split curated contigs from not curated ones [False]",
-    )
+    # curflags.add_argument(
+    #     "--split-curated",
+    #     action="store_true",
+    #     default=False,
+    #     help="Split curated contigs from not curated ones [False]",
+    # )
     # curflags.add_argument("--ext_multifasta", help="Execute the merge between curated contigs [True]",
     #                        choices=['True','False'], default = "True")
 
@@ -164,7 +164,7 @@ def parse_args(args):
     errflags.add_argument(
         "-minid",
         metavar="FLOAT",
-        help="Minumum identity for alignment [0.9]",
+        help="Minimum identity for alignment [0.9]",
         default=0.9,
         type=float,
     )
@@ -209,7 +209,7 @@ def parse_args(args):
         epilog=textwrap.dedent(
             """\
             Usage: FixAME curation -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
-                   FixAME curation -b {bin_folder} -r12 {R12.fastq} -o {path}
+                   FixAME curation -b {bin_folder} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
                    
                    """
         ),
@@ -233,7 +233,7 @@ def parse_args(args):
         epilog=textwrap.dedent(
             """\
             Usage: FixAME error_finder -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
-                   FixAME error_finder -b {bin_folder} -r12 {R12.fastq} -o {path}
+                   FixAME error_finder -b {bin_folder} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
    
                    """
         ),
@@ -257,7 +257,7 @@ def parse_args(args):
         epilog=textwrap.dedent(
             """\
             Usage: FixAME merge -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
-                   FixAME merge -b {bin_folder} -r12 {R12.fastq} -o {path} 
+                   FixAME merge -b {bin_folder} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
    
                    """
         ),

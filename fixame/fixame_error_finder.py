@@ -428,6 +428,7 @@ def main(**kwargs):
         read12_in = ""
 
     # av_readlen = temp_average_read(kwargs.get('r1'))
+    logger.info("\n FixAME - Error Finder\n")
 
     if method == 0:
         fasta_in = os.path.realpath(os.path.expanduser(kwargs.get("fasta")))
