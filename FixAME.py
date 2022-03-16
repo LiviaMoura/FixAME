@@ -1,4 +1,4 @@
-##!/usr/bin/env python3
+#!/usr/bin/env python3
 
 # **********************************
 # **********************************
@@ -7,7 +7,7 @@
 # **********************************
 
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2021"
+__copyright__ = "Copyright 2022"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
