@@ -5,7 +5,7 @@
 
 ## Installation
 
-First of all, you need to make sure all dependecies are installed at your $PATH
+First of all, you need to make sure all dependencies are installed at your $PATH
 
 [samtools](https://github.com/samtools/samtools) v.1.12+ <br>
 [bcftools](https://github.com/samtools/bcftools) v.1.12+<br> 
@@ -23,6 +23,15 @@ After that you can clone this repository to the desired location
 ```
 git clone https://github.com/LiviaMoura/FixAME.git
 ```
+
+If you don't want trouble and make sure it'll work, we created a Dockerfile
+```
+docker build -t lmoura/FixAME -f Dockerfile
+```
+or you can download the docker image at
+
+[link here]
+
 
 ## Running FixAME
 
