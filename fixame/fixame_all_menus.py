@@ -235,29 +235,29 @@ def parse_args(args):
         ),
     )
 
-    merge_parser = subparsers.add_parser(
-        "merge",
-        description=textwrap.dedent(
-            """\
+    # merge_parser = subparsers.add_parser(
+    #     "merge",
+    #     description=textwrap.dedent(
+    #         """\
             
-                             \u001b[32m --- Merge script --- \u001b[0m
+    #                          \u001b[32m --- Merge script --- \u001b[0m
 
-            If possible, it'll merge contigs edges and create scaffolds based on aligned reads. 
-            If bins, the merge will only considers the contigs from that BIN
+    #         If possible, it'll merge contigs edges and create scaffolds based on aligned reads. 
+    #         If bins, the merge will only considers the contigs from that BIN
 
-     """
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[require_parser, system_parser],
-        add_help=False,
-        epilog=textwrap.dedent(
-            """\
-            Usage: FixAME merge -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
-                   FixAME merge -b {bin_folder} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
+    #  """
+    #     ),
+    #     formatter_class=argparse.RawDescriptionHelpFormatter,
+    #     parents=[require_parser, system_parser],
+    #     add_help=False,
+    #     epilog=textwrap.dedent(
+    #         """\
+    #         Usage: FixAME merge -f {fasta_file} -r1 {R1.fastq} -r2 {R2.fastq} -o {path}
+    #                FixAME merge -b {bin_folder} -r1 {R1.fastq} -r2 {R2.fastq} -o {path} 
    
-                   """
-        ),
-    )
+    #                """
+    #     ),
+    # )
     # Handle the situation where the user wants the raw help
     if len(args) == 0 or args[0] == "-h" or args[0] == "--help":
         printHelp()

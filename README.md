@@ -17,6 +17,7 @@ First of all, you need to make sure all dependencies are installed at your $PATH
 [xopen](https://pypi.org/project/xopen/) v.0.9.0 <br> 
 [pandas](https://pypi.org/project/pandas/) v.1.0.3+ <br>
 [Biopython](https://biopython.org/wiki/Download) v.1.77
+[regex](https://pypi.org/project/regex/)
 
 After that you can clone this repository to the desired location
 
@@ -24,10 +25,11 @@ After that you can clone this repository to the desired location
 git clone https://github.com/LiviaMoura/FixAME.git
 ```
 
-If you don't want trouble and make sure it'll work, we created a Dockerfile
+If you don't want trouble and make sure it'll work, we created a Dockerfile 
 ```
-docker build -t lmoura/FixAME -f Dockerfile
+docker build -t lmoura/fixame:1.0.0 -f Dockerfile .
 ```
+
 or you can download the docker image at
 
 [link here]
