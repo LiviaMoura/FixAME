@@ -1,5 +1,5 @@
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2021"
+__copyright__ = "Copyright 2022"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
@@ -194,11 +194,7 @@ def parse_args(args):
                              \u001b[32m --- CURATION workflow --- \u001b[0m
 
             The complete workflow to curate your genome, bins or metagenome
-            Here, It'll look for assembly local errors and try to fix them. 
-            
-            If possible, it'll merge contigs edges and create scaffolds with
-            the curated version (default).
-            If bins, the merge will only considers the contigs from that BIN.
+            Here, It'll look for assembly local errors and try to fix them.
 
 
      """

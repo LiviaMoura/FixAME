@@ -2,7 +2,7 @@ from fixame.fixame_curation import main as curation_main
 from fixame.fixame_error_finder import main as error_finder_main
 
 __author__ = "Livia Moura"
-__copyright__ = "Copyright 2021"
+__copyright__ = "Copyright 2022"
 __maintainer__ = "Livia Moura, Rohan Sachdeva"
 __email__ = "liviam.moura@gmail.com, rohansach@berkeley.edu"
 __status__ = "Development"
