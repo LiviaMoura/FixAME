@@ -9,14 +9,14 @@ First of all, you need to make sure all dependencies are installed at your $PATH
 
 [samtools](https://github.com/samtools/samtools) v.1.12+ <br>
 [bcftools](https://github.com/samtools/bcftools) v.1.12+<br> 
-[BBMAP](https://sourceforge.net/projects/bbmap/) -- specially `bbmap.sh` and `filterbyname.sh`
+[BBMAP](https://sourceforge.net/projects/bbmap/) -- specially `bbmap.sh` and `filterbyname.sh` (it needs openjdk-7+)
 
 -- Python 3.6+ and the dependecies
 
 [pysam](https://github.com/pysam-developers/pysam) v.0.15.4+<br>
 [xopen](https://pypi.org/project/xopen/) v.0.9.0 <br> 
 [pandas](https://pypi.org/project/pandas/) v.1.0.3+ <br>
-[Biopython](https://biopython.org/wiki/Download) v.1.77
+[Biopython](https://biopython.org/wiki/Download) v.1.77 <br>
 [regex](https://pypi.org/project/regex/)
 
 After that you can clone this repository to the desired location
@@ -25,15 +25,16 @@ After that you can clone this repository to the desired location
 git clone https://github.com/LiviaMoura/FixAME.git
 ```
 
+### Docker
 If you don't want trouble and make sure it'll work, we created a Dockerfile 
 ```
 docker build -t lmoura/fixame:1.0.0 -f Dockerfile .
 ```
 
-or you can download the docker image at
-
-[link here]
-
+or you can pull the docker image at
+```
+docker pull livmoura/fixame:1.0.0
+```
 
 ## Running FixAME
 
