@@ -168,9 +168,8 @@ def parse_map(
         reference_length = reference_to_length[reference]
 
         if reference_length >= minimum_assembly_length and not read.is_unmapped:
-            # mismatches, query_length = read.get_tag("NM"), read.query_alignment_length
             mismatches, query_length = (
-                read.get_tag("XM") - read.get_tag("XN"),
+                read.get_tag("NM") - read.get_tag("XN"),
                 read.query_alignment_length,
             )
 
