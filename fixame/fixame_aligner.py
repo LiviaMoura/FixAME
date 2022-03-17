@@ -54,6 +54,7 @@ def aligner(
                 r2,
                 "-X",
                 "1000",
+                "--sam-no-qname-trunc",
                 "--no-unal",
                 "--threads",
                 str(thread),
