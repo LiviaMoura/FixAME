@@ -133,7 +133,9 @@ def main(**kwargs):
             closed_N_pad_path_strip_ext + "_sorted.bam"
         )
 
-        print(f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}")
+        print(
+            f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}"
+        )
 
         logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
 
@@ -193,7 +195,6 @@ def main(**kwargs):
                 mydir + "/new_fastas/" + name_fasta + "_renewed.fasta",
                 minimum_assembly_length,
             )
-            
 
             (
                 bam_dict,
@@ -260,7 +261,7 @@ def main(**kwargs):
             raise e
 
         logger.info("\n --- Starting to fix sample {} ---\n".format(name_fasta))
-        #logger.info("\nStarting to fix: {}\n".format(os.path.basename(fasta_in)))
+        # logger.info("\nStarting to fix: {}\n".format(os.path.basename(fasta_in)))
 
         for count, r in enumerate(range(kwargs.get("xtimes")), 1):
             fixed = open(
@@ -406,7 +407,9 @@ def main(**kwargs):
             closed_N_pad_path_strip_ext + "_sorted.bam"
         )
 
-        print(f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}")
+        print(
+            f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}"
+        )
 
         logger.info("\n --- Begin analysis {} ---\n".format(name_sample))
 
@@ -431,7 +434,7 @@ def main(**kwargs):
                 r1=read1_in,
                 r2=read2_in,
                 r12=read12_in,
-                bam_out=pad_fasta_name_strip_ext#name_sample + "_renewed",
+                bam_out=pad_fasta_name_strip_ext,  # name_sample + "_renewed",
             )
         except Exception as e:
             logger.exception("Something went wrong")
@@ -446,7 +449,7 @@ def main(**kwargs):
                 mydir,
                 kwargs.get("threads"),
                 num_mm,
-                closed_N_pad_path_strip_ext,#mydir + "/tmp/" + name_sample + "_renewed",
+                closed_N_pad_path_strip_ext,  # mydir + "/tmp/" + name_sample + "_renewed",
                 read1_in,
                 read2_in,
                 read12_in,
@@ -471,7 +474,7 @@ def main(**kwargs):
                 template_length_max,
                 average_gap_std,
             ) = parse_map(
-                closed_N_pad_path_strip_ext_map_path, #mydir + "/tmp/" + name_sample + "_renewed_sorted.bam",
+                closed_N_pad_path_strip_ext_map_path,  # mydir + "/tmp/" + name_sample + "_renewed_sorted.bam",
                 num_mm,
                 kwargs.get("threads"),
                 minimum_assembly_length,
@@ -1335,7 +1338,7 @@ def build_N(
                     )
                 )
 
-                if seq_record.seq[round((start + end) / 2)] != "N":
+                if seq_record.seq[round((start + end) / 2) - 1] != "N":
                     dict_only_errors[seq_record.id].append(tuple([start, end]))
 
             ### This is part of extension script - It adds av_readlen*3 "N"s in the beginning and end from a file
@@ -1810,8 +1813,6 @@ def final_output(output, df, features):
         index=None,
         sep="\t",
     )
-
-    
 
     extra_features = open(
         os.path.join(output, "FixAME_table", "FixAME_features_report.tsv"), "w+"
