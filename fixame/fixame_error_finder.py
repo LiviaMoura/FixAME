@@ -601,7 +601,11 @@ def main(**kwargs):
                 for item in value:
                     error_loc.write(
                         "{0}\t{1}\t{2}\t{3}\t{4}\n".format(
-                            key, item[0], item[1], abs(item[1] - item[0]), "Local_error"
+                            key,
+                            item[0],
+                            item[1],
+                            abs(item[1] - item[0]) + 1,
+                            "local_error",
                         )
                     )
             error_loc.close()
