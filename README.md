@@ -26,7 +26,7 @@ git clone https://github.com/LiviaMoura/FixAME.git
 ```
 
 ### Docker
-If you don't want trouble and make sure it'll work, we created a Dockerfile 
+If you don't want trouble and you want to make sure it'll work, we created a Dockerfile 
 ```
 docker build -t lmoura/fixame:1.0.0 -f Dockerfile .
 ```
