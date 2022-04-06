@@ -133,10 +133,6 @@ def main(**kwargs):
             closed_N_pad_path_strip_ext + "_sorted.bam"
         )
 
-        print(
-            f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}"
-        )
-
         logger.info("\n --- Begin analysis {} ---\n".format(name_fasta))
 
         try:
@@ -405,10 +401,6 @@ def main(**kwargs):
 
         closed_N_pad_path_strip_ext_map_path = (
             closed_N_pad_path_strip_ext + "_sorted.bam"
-        )
-
-        print(
-            f"\n PRINTANDO AQUI \n {pad_fasta_name_strip_ext}, {closed_N_pad_path_strip_ext},{closed_N_pad_path_strip_ext_map_path}"
         )
 
         logger.info("\n --- Begin analysis {} ---\n".format(name_sample))
@@ -1708,9 +1700,9 @@ def check_reads_N_edges(
             error_df.loc[error_df["contig"] == contig_name, "count"] = error_df[
                 "start"
             ] - (start + count - (3 * av_readlen))
-            idx = error_df[error_df["contig"] == contig_name]["count"].idxmin()
-            error_df.at[idx, "type_of_error"] = "possible chimera"
-
+            if not error_df[error_df['contig'].isin([contig_name])].empty:
+                idx = error_df[error_df["contig"] == contig_name]["count"].idxmin()
+                error_df.at[idx, "type_of_error"] = "possible chimera"
             continue
         else:
             # print (seq_name,(start-2*av_readlen), (end+2*av_readlen), left_right)
