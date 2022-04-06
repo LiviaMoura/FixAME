@@ -1630,8 +1630,9 @@ def check_reads_N_edges(
             error_df.loc[error_df["contig"] == contig_name, "count"] = error_df[
                 "start"
             ] - (start + count - (3 * av_readlen))
-            idx = error_df[error_df["contig"] == contig_name]["count"].idxmin()
-            error_df.at[idx, "type_of_error"] = "possible chimera"
+            if not error_df[error_df['contig'].isin([contig_name])].empty:
+                idx = error_df[error_df["contig"] == contig_name]["count"].idxmin()
+                error_df.at[idx, "type_of_error"] = "possible chimera"
 
             continue
         else:
