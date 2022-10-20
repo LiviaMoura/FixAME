@@ -1124,7 +1124,7 @@ def filtering_bam(output_dir, thread, num_mm, bam_sorted, r1, r2, r12):
     match_reads = list()
 
     for record in SeqIO.parse(xopen(r1), "fastq"):
-        firstread = record.name
+        firstread = record.description
         break
 
     addsuffix = False
