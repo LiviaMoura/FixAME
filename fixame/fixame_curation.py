@@ -644,7 +644,7 @@ def check_overlap(
                                 & (end < error_df["N_build_end"]),
                                 "N_build_start",
                             ] = (
-                                error_df["N_build_start"] + 3 * av_readlen
+                                error_df["N_build_start"] + 10 * av_readlen
                             )
                             error_df.loc[
                                 (error_df["contig"] == contig_name)
@@ -652,7 +652,7 @@ def check_overlap(
                                 & (end < error_df["N_build_end"]),
                                 "N_build_end",
                             ] = (
-                                error_df["N_build_end"] + 3 * av_readlen
+                                error_df["N_build_end"] + 10 * av_readlen
                             )
 
             for j, (start, end, number) in enumerate(N_pos.get(contig_name)):
@@ -1217,7 +1217,7 @@ def build_N(
     dict_error_pos = defaultdict(list)
     dict_only_errors = defaultdict(list)
     dict_len = defaultdict()
-    ext_size = av_readlen * 3
+    ext_size = av_readlen * 10
     set_keys = set(organized_errors.keys())
 
     fasta_N = open(os.path.join(output_dir, "tmp", "v_0.fasta"), "w")
@@ -1455,7 +1455,7 @@ def remove_N(
     error_df,
 ):
     fasta_wo_N = ""
-    ext_size = av_readlen * 3
+    ext_size = av_readlen * 10
     unordered_fasta = open(
         os.path.join(output_dir, "tmp", name_fasta + "_unordered.fasta"), "w"
     )
@@ -1622,17 +1622,17 @@ def check_reads_N_edges(
             no_support.write(
                 "{}\t{}\t{}\n".format(
                     contig_name,
-                    start + count - (3 * av_readlen),
-                    end + count - (3 * av_readlen),
+                    start + count - (10 * av_readlen),
+                    end + count - (10 * av_readlen),
                 )
             )
             
             error_df.loc[error_df["contig"] == contig_name, "count"] = abs(error_df[
                 "start"
-            ] - (start + count - (3 * av_readlen)))
+            ] - (start + count - (10 * av_readlen)))
             if not error_df[error_df['contig'].isin([contig_name])].empty:
                 idx = error_df[error_df["contig"] == contig_name]["count"].idxmin()
-                if error_df["count"].iloc[idx] <=  (3 * av_readlen):
+                if error_df["count"].iloc[idx] <=  (10 * av_readlen):
                     error_df.at[idx, "type_of_error"] = "possible chimera"
 
             continue
@@ -1699,7 +1699,7 @@ def check_reads_N_edges(
 def remove_N_slave(fasta_header, seq_mutable, actual_start, actual_end, av_readlen):
     len_seq = len(seq_mutable)
     new_fasta = ""
-    ext_size = av_readlen * 3
+    ext_size = av_readlen * 10
     for number in range(len_seq - (ext_size) - actual_end, len_seq):
         if seq_mutable[number] == "N":
             remov_end = number
